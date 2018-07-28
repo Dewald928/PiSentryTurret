@@ -1,3 +1,15 @@
+#=====================================================
+#-------------------PiSentryGun-----------------------
+#---------------- By: Dewald Krynauw -----------------
+#=====================================================
+''' Proverbs 6:6-8
+    6  Go to the ant, you sluggard!
+    Consider her ways and be wise,
+    7 Which, having no captain,
+    Overseer or ruler,
+    8 Provides her supplies in the summer,
+    And gathers her food in the harvest.'''
+
 import cv2
 import numpy as np
 
@@ -66,7 +78,7 @@ def main():
         # cv2.drawContours(frame1, c, -1, (0, 0, 255), 2)
 
         # cv2.imshow("Original", frame2)
-        cv2.imshow("Output", frame1)
+        # cv2.imshow("Output", frame1)
         if cv2.waitKey(1) == 27:  # exit on ESC
             break
 
