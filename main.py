@@ -26,6 +26,9 @@ def main():
 
     #    print(cap.get(3))
     #    print(cap.get(4))
+    # import drivers.ServoDriverController
+    # driver = drivers.ServoDriverController.ServoDriver()
+    # driver.move(6,-0.99)
 
     if cap.isOpened():
         #        ret, frame = cap.read()
