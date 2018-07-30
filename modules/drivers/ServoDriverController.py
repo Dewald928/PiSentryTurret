@@ -1,5 +1,7 @@
+#!/usr/bin/python
 # Import the PCA9685 module.
-from drivers import Adafruit_PCA9685
+from modules.drivers import Adafruit_PCA9685
+
 
 #===========================================================================================
 # This class translates the position of the servo to the
@@ -18,7 +20,7 @@ from drivers import Adafruit_PCA9685
 
 class ServoDriver :
 
-    def __init__(self):
+    def __init__(self, cfg):
         # PWM setting
         FREQ = 60 # frequency set to 60 Hz
         self.pwm = Adafruit_PCA9685.PCA9685()
@@ -30,8 +32,8 @@ class ServoDriver :
         pulse_length //= 4096               #12 bit of resolution
         self.pulse_factor = 1000 / pulse_length
         #Servo range (test your servos to see milisecond range)
-        self.pulse_center = 1.6
-        self.pulse_range = 1.1
+        self.pulse_center = float(cfg['turret']['pulse_center'])
+        self.pulse_range = float(cfg['turret']['pulse_range'])
 
     def move(self, servo, position):
         if -1 < position < 1: #check if in range -1...0...1

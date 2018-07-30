@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #=====================================================
 #-------------------PiSentryGun-----------------------
 #---------------- By: Dewald Krynauw -----------------
@@ -10,11 +11,30 @@
     8 Provides her supplies in the summer,
     And gathers her food in the harvest.'''
 
+import sys
+import os
 import cv2
 import numpy as np
+import threading
+from time import sleep
+import modules.Camera as Camera
+import modules.Controller as Controller
+import modules.Turret as Turret
+
+
+# load config
+from configobj import ConfigObj  # this library supports writing/saving config
+cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
 
 def main():
+
+    # =======================
+    # ------ SETUP ----------
+    # =======================
+
+
+
     scale = 4
     w = int(640 / scale)
     h = int(480 / scale)
@@ -26,16 +46,28 @@ def main():
 
     #    print(cap.get(3))
     #    print(cap.get(4))
-    # import drivers.ServoDriverController
-    # driver = drivers.ServoDriverController.ServoDriver()
-    # driver.move(6,-0.99)
+    import modules.drivers.ServoDriverController
+    driver = modules.drivers.ServoDriverController.ServoDriver()
+    driver.move(6,-0.99)
 
     if cap.isOpened():
-        #        ret, frame = cap.read()
         ret, frame1 = cap.read()
         ret, frame2 = cap.read()
     else:
         ret = False
+
+
+    # Spawn Camera Thread (Fetches camera frames)
+
+    # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
+
+    # Spawn Controller Thread (Handles input from keyboard)
+
+
+    # ======================================
+    # ------------- LOOP -------------------
+    # ======================================
+
 
     while ret:
 
@@ -69,16 +101,14 @@ def main():
 
             print(str(cx) + " " + str(cy))
             x, y, w, h = cv2.boundingRect(rect)
-            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)       #draw rectangle
             cv2.putText(frame1, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
-            cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)
+            cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)                     #draw cross air
             # cv2.line(frame1, (0,cy), (w,cy), (0,0,255), 2)
             # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
             # cv2.imshow("Show", img)
 
         # img, c, h = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        # cv2.drawContours(frame1, c, -1, (0, 0, 255), 2)
 
         # cv2.imshow("Original", frame2)
         # cv2.imshow("Output", frame1)
