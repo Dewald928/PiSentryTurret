@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #=====================================================
 #-------------------PiSentryGun-----------------------
 #---------------- By: Dewald Krynauw -----------------
@@ -27,14 +27,27 @@ from configobj import ConfigObj  # this library supports writing/saving config
 cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
 
-def main():
+# mouse click callback event
+def on_click(event, cx, cy, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print("Moving to " + str(cx), str(cy))
+        # coords to position
+        # turret to position
+        # fire if arrived at position
+    if event == cv2.EVENT_MBUTTONDOWN:
+        print("FIRE!!!")
 
+
+
+
+
+
+
+def main():
     # =======================
     # ------ SETUP ----------
     # =======================
-
-
-
+    # camera setup
     scale = 4
     w = int(640 / scale)
     h = int(480 / scale)
@@ -44,17 +57,27 @@ def main():
     cap.set(3, w)
     cap.set(4, h)
 
-    #    print(cap.get(3))
-    #    print(cap.get(4))
-    import modules.drivers.ServoDriverController
-    driver = modules.drivers.ServoDriverController.ServoDriver()
-    driver.move(6,-0.99)
 
     if cap.isOpened():
         ret, frame1 = cap.read()
         ret, frame2 = cap.read()
     else:
         ret = False
+
+    display = int(cfg['camera']['display'])
+    if display == 1:
+        cv2.namedWindow('display')
+        cv2.setMouseCallback('display', on_click, 0)
+
+
+
+
+    #    print(cap.get(3))
+    #    print(cap.get(4))
+    import modules.drivers.ServoDriverController
+    driver = modules.drivers.ServoDriverController.ServoDriver(cfg)
+    driver.move(6,-0.99)
+
 
 
     # Spawn Camera Thread (Fetches camera frames)
@@ -108,10 +131,10 @@ def main():
             # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
             # cv2.imshow("Show", img)
 
-        # img, c, h = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # cv2.imshow("Original", frame2)
-        # cv2.imshow("Output", frame1)
+        if display == 1:
+            cv2.imshow("display", frame1)
         if cv2.waitKey(1) == 27:  # exit on ESC
             break
 
