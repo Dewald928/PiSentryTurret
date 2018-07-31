@@ -44,25 +44,31 @@ def on_click(event, cx, cy, flags, param):
 
 
 def main():
+    global cam, turret, controller
     # =======================
     # ------ SETUP ----------
     # =======================
-    # camera setup
-    scale = 4
-    w = int(640 / scale)
-    h = int(480 / scale)
 
-    cap = cv2.VideoCapture(0)
-
-    cap.set(3, w)
-    cap.set(4, h)
+    # Create camera object
+    cam = Camera.Cam(cfg)
+    frame1 = cam.get_frame()
+    frame2 = cam.get_frame()
 
 
-    if cap.isOpened():
-        ret, frame1 = cap.read()
-        ret, frame2 = cap.read()
-    else:
-        ret = False
+    # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
+
+    # Spawn Controller Thread (Handles input from keyboard)
+
+    # Wait a few seconds
+    print('Starting up')
+    i = 0
+    while (i < 30):  # allow 5sec for startup
+        i += 1
+        sleep(0.1)
+
+
+
+
 
     display = int(cfg['camera']['display'])
     if display == 1:
@@ -72,27 +78,18 @@ def main():
 
 
 
-    #    print(cap.get(3))
-    #    print(cap.get(4))
+
+
     import modules.drivers.ServoDriverController
     driver = modules.drivers.ServoDriverController.ServoDriver(cfg)
     driver.move(6,-0.99)
 
 
 
-    # Spawn Camera Thread (Fetches camera frames)
-
-    # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
-
-    # Spawn Controller Thread (Handles input from keyboard)
-
-
     # ======================================
     # ------------- LOOP -------------------
     # ======================================
-
-
-    while ret:
+    while True:
 
         d = cv2.absdiff(frame1, frame2)
 
@@ -139,10 +136,10 @@ def main():
             break
 
         frame1 = frame2
-        ret, frame2 = cap.read()
+        frame2 = cam.get_frame()
 
     cv2.destroyAllWindows()
-    cap.release()
+    cam.quit()
 
 
 if __name__ == "__main__":
