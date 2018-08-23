@@ -18,12 +18,11 @@ import numpy as np
 import threading
 from time import sleep
 import modules.Camera as Camera
-import modules.Controller as Controller
 import modules.Turret as Turret
 
 
 # load config
-from configobj import ConfigObj  # this library supports writing/saving config
+from configobj import ConfigObj  # cool read and write config file
 cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
 
@@ -44,7 +43,7 @@ def on_click(event, cx, cy, flags, param):
 
 
 def main():
-    global cam, turret, controller
+    global cam, turret
     # =======================
     # ------ SETUP ----------
     # =======================
@@ -68,8 +67,6 @@ def main():
 
 
 
-
-
     display = int(cfg['camera']['display'])
     if display == 1:
         cv2.namedWindow('display')
@@ -82,7 +79,7 @@ def main():
 
     import modules.drivers.ServoDriverController
     driver = modules.drivers.ServoDriverController.ServoDriver(cfg)
-    driver.move(6,-0.99)
+    driver.move(6,-0.65)
 
 
 
