@@ -30,11 +30,13 @@ cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 def on_click(event, cx, cy, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Moving to " + str(cx), str(cy))
-        # coords to position
+        coords = (cx,cy)
+        newcoord = turret.coordToPulse(coords)
         # turret to position
         # fire if arrived at position
     if event == cv2.EVENT_MBUTTONDOWN:
-        print("FIRE!!!")
+        turret.fire()
+
 
 
 
@@ -55,6 +57,7 @@ def main():
 
 
     # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
+    turret = Turret.Controller(cfg, cam)
 
     # Spawn Controller Thread (Handles input from keyboard)
 

@@ -19,14 +19,14 @@ except:
 threadexit = threading.Event()
 
 class Controller(threading.Thread):
-    def __init__(self, cfg):
+    def __init__(self, cfg, cam):
 
         # Servo Pins
         self.servoPan = int(cfg['turret']['panchannel'])
         self.servoTilt = int(cfg['turret']['tiltchannel'])
         self.servoTrigger = int(cfg['turret']['triggerchannel'])
         # Driver
-        self.driver = ServoDriver()
+        self.driver = ServoDriver(cfg)
         # Behaviour variables
 
         # variables
@@ -38,12 +38,23 @@ class Controller(threading.Thread):
         self.xMax = float(cfg['controller']['xMax'])
         self.yMin = float(cfg['controller']['yMin'])
         self.yMax = float(cfg['controller']['yMax'])
-        # self.xRatio =
+        self.xRatio = (cam.w)/(self.xMax-self.xMin)
+        self.yRatio = (cam.h)/(self.yMax-self.yMin)
+
+        print(self.xRatio, self.yRatio)
 
         threading.Thread.__init__(self)
 
     def coordToPulse(self,coord):
-        print('Hi')
+        xPulse = (float(coord[0])/self.xRatio)+self.xMin
+        yPulse = ((self.cam.h - float(coord[1]))/self.yRatio)+self.yMin
+        print(xPulse,yPulse)
+        return (xPulse,yPulse)
+
+    def fire(self): # pull trigger thread
+        print('Skiet skiet')
+
+
 
 
 
