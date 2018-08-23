@@ -19,7 +19,7 @@ except:
 threadexit = threading.Event()
 
 class Controller(threading.Thread):
-    def __init__(self, cfg, cam):
+    def __init__(self, cfg):
 
         # Servo Pins
         self.servoPan = int(cfg['turret']['panchannel'])
@@ -34,12 +34,17 @@ class Controller(threading.Thread):
         self.armed = False
         self.center = [0.0,0.0] #center of screen
         self.xy = self.center # current position
+        self.widthPre = int(cfg['camera']['width'])
+        self.heightPre = int(cfg['camera']['height'])
+        self.scaledown = int(cfg['camera']['scaledown'])  # faster processing
+        self.camw = int(self.widthPre / self.scaledown)
+        self.camh = int(self.heightPre / self.scaledown)
         self.xMin = float(cfg['controller']['xMin'])
         self.xMax = float(cfg['controller']['xMax'])
         self.yMin = float(cfg['controller']['yMin'])
         self.yMax = float(cfg['controller']['yMax'])
-        self.xRatio = (cam.w)/(self.xMax-self.xMin)
-        self.yRatio = (cam.h)/(self.yMax-self.yMin)
+        self.xRatio = (self.camw)/(self.xMax-self.xMin)
+        self.yRatio = (self.camh)/(self.yMax-self.yMin)
 
         print(self.xRatio, self.yRatio)
 
@@ -47,7 +52,7 @@ class Controller(threading.Thread):
 
     def coordToPulse(self,coord):
         xPulse = (float(coord[0])/self.xRatio)+self.xMin
-        yPulse = ((self.cam.h - float(coord[1]))/self.yRatio)+self.yMin
+        yPulse = ((self.camh - float(coord[1]))/self.yRatio)+self.yMin
         print(xPulse,yPulse)
         return (xPulse,yPulse)
 

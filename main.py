@@ -57,7 +57,10 @@ def main():
 
 
     # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
-    turret = Turret.Controller(cfg, cam)
+    turret = Turret.Controller(cfg)
+    turret.daemon = True
+    # turret.recenter()
+    turret.start()
 
     # Spawn Controller Thread (Handles input from keyboard)
 
@@ -127,6 +130,8 @@ def main():
             # cv2.line(frame1, (0,cy), (w,cy), (0,0,255), 2)
             # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
             # cv2.imshow("Show", img)
+
+            turret.coordToPulse((cx,cy))
 
 
         # cv2.imshow("Original", frame2)
