@@ -132,6 +132,7 @@ def main():
             # cv2.imshow("Show", img)
 
             turret.coordToPulse((cx,cy))
+            turret.fire()
 
 
         # cv2.imshow("Original", frame2)
