@@ -87,7 +87,9 @@ class Controller(threading.Thread):
 
     def sendTarget(self, newXY, curXY):
         print('Sending target')
-        self.fire()
+
+        if self.armed and not self.triggertimer.isSet():
+            self.fire()
 
     def quit(self): # proper termination of thread
         global threadexit
@@ -99,8 +101,10 @@ class Controller(threading.Thread):
         while (not threadexit.isSet()):
             # print('Turret thread running')
             sleep(0.01)
-            self.driver.move(self.servoPan, self.xPulse)
-            self.driver.move(self.servoTilt, self.yPulse)
+            self.xy[0] = self.yPulse
+            self.xy[1] = self.xPulse
+            self.driver.move(self.servoPan, self.xy[0])
+            self.driver.move(self.servoTilt, self.xy[1])
 
 
 

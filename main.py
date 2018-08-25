@@ -37,7 +37,8 @@ def on_click(event, cx, cy, flags, param):
         # turret to position
         # fire if arrived at position
     if event == cv2.EVENT_MBUTTONDOWN:
-        turret.fire()
+        # turret.fire()
+        print('Test middlemouse')
 
 
 
@@ -63,6 +64,7 @@ def main():
     turret.daemon = True
     # turret.recenter()
     turret.start()
+    turret.armed = True
 
     # Spawn Controller Thread (Handles input from keyboard)
 
@@ -85,16 +87,13 @@ def main():
 
 
 
-    import modules.drivers.ServoDriverController
-    driver = modules.drivers.ServoDriverController.ServoDriver(cfg)
-    driver.move(6,-0.65)
-
-
-
     # ======================================
     # ------------- LOOP -------------------
     # ======================================
     while True:
+
+        #current pulse position
+        currentXY = turret.xy
 
         d = cv2.absdiff(frame1, frame2)
 
@@ -135,8 +134,7 @@ def main():
             # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
             # cv2.imshow("Show", img)
 
-            turret.coordToPulse((cx,cy))
-            # turret.fire()
+            turret.sendTarget(turret.coordToPulse((cx,cy)),  currentXY)
 
 
         # cv2.imshow("Original", frame2)
