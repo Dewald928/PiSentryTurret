@@ -63,7 +63,7 @@ def main(display):
     turret.armed = True
 
     # TODO Spawn Controller Thread (Handles input from keyboard)
-    # KeyboardPoller.WaitKey().thread.start()
+    KeyboardPoller.WaitKey().thread.start()
 
     # Wait a few seconds
     print('Starting up')
@@ -140,7 +140,7 @@ def main(display):
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
-                print(key)
+                # print(key)
                 KeyboardPoller.keypressed.set()
                 KeyboardPoller.key = chr(key)
 
@@ -149,11 +149,25 @@ def main(display):
 
         # TODO KeyboardHandler functions
         #keyboard handler
-        # if KeyboardPoller.keypressed.isSet():
-        #     if KeyboardPoller.key == "a":
-        #         print('You pressed AAAA')
-        #     # reset key polling
-        #     KeyboardPoller.WaitKey().thread.start()
+        if KeyboardPoller.keypressed.isSet():
+            if KeyboardPoller.key == "a":
+                turret.xMin = turret.xy[0]
+                turret.xRatio = cam.w/(turret.xMax-turret.xMin)
+                print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
+            if KeyboardPoller.key == "d":
+                turret.xMax = turret.xy[0]
+                turret.xRatio = cam.w/(turret.xMax-turret.xMin)
+                print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
+            if KeyboardPoller.key == "s":
+                turret.yMin = turret.xy[1]
+                turret.yRatio = cam.h/(turret.yMax-turret.yMin)
+                print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
+            if KeyboardPoller.key == "w":
+                turret.yMax = turret.xy[1]
+                turret.yRatio = cam.h/(turret.yMax-turret.yMin)
+                print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
+            # reset key polling
+            KeyboardPoller.WaitKey().thread.start()
 
 
         frame1 = frame2

@@ -51,12 +51,14 @@ class Controller(threading.Thread):
         self.xPulse = 0.0
         self.yPulse = 0.0
         self.firing = False
+        print(self.xRatio, self.yRatio, 'x and y ratio')
 
         threading.Thread.__init__(self)
 
     def coordToPulse(self,coord):
         self.xPulse = (float(coord[0])/self.xRatio)+self.xMin
         self.yPulse = ((self.camh - float(coord[1]))/self.yRatio)+self.yMin
+        print(self.xPulse, self.yPulse)
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
@@ -92,8 +94,8 @@ class Controller(threading.Thread):
             # print('Turret thread running')
             # TODO Step each iteration
             sleep(0.01)
-            self.xy[0] = self.yPulse
-            self.xy[1] = self.xPulse
+            self.xy[0] = self.xPulse
+            self.xy[1] = self.yPulse
             self.driver.move(self.servoPan, self.xy[0])
             self.driver.move(self.servoTilt, self.xy[1])
 
