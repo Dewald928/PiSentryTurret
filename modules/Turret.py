@@ -2,7 +2,6 @@
 
 import threading
 from time import sleep
-import modules.Timer as Timer
 try:
     from modules.drivers.ServoDriverController import ServoDriver
 except:
@@ -23,6 +22,7 @@ class Controller(threading.Thread):
     def __init__(self, cfg):
 
         # Servo Pins
+        self.triggerwait = 3
         self.servoPan = int(cfg['turret']['panchannel'])
         self.servoTilt = int(cfg['turret']['tiltchannel'])
         self.servoTrigger = int(cfg['turret']['triggerchannel'])
@@ -34,7 +34,6 @@ class Controller(threading.Thread):
 
         # variables
         self.triggertimer = threading.Event()
-        self.tiggerwait = 2
         self.armed = False
         self.center = [0.0,0.0] #center of screen
         self.xy = self.center # current position
@@ -51,7 +50,7 @@ class Controller(threading.Thread):
         self.yRatio = (self.camh)/(self.yMax-self.yMin)
         self.xPulse = 0.0
         self.yPulse = 0.0
-        self.fire = False
+        self.firing = False
 
         print(self.xRatio, self.yRatio)
 
@@ -64,20 +63,31 @@ class Controller(threading.Thread):
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
-        print('Skiet skiet')
+        print('skiet skiet')
         self.driver.move(self.servoTrigger,self.triggerHomePos)
         sleep(0.2)
         self.driver.move(self.servoTrigger,self.triggerFirePos)
         sleep(0.2)
-        Timer.Countdown(self.triggerwait,self.triggertimer).thread.start()
+        t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
+        t.start()
+        t.cancel() # proper termination
+
+    def fireOnce(self):
+        print('skiet skiet')
+        self.driver.move(self.servoTrigger, self.triggerHomePos)
+        sleep(0.2)
+        self.driver.move(self.servoTrigger, self.triggerFirePos)
+        sleep(0.2)
+        self.driver.move(self.servoTrigger, self.triggerHomePos)
 
 
     def centerPosition(self):
         # returns turret  to middle of screen (0,0)
         self.sendTarget()
 
-    def sendTarget(self):
+    def sendTarget(self, newXY, curXY):
         print('Sending target')
+        self.fire()
 
     def quit(self): # proper termination of thread
         global threadexit

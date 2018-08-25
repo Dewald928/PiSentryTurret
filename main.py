@@ -32,6 +32,8 @@ def on_click(event, cx, cy, flags, param):
         print("Moving to " + str(cx), str(cy))
         coords = (cx,cy)
         newcoord = turret.coordToPulse(coords)
+        currcoord = (turret.xy[0],turret.xy[1])
+        turret.sendTarget(newcoord,currcoord)
         # turret to position
         # fire if arrived at position
     if event == cv2.EVENT_MBUTTONDOWN:
@@ -67,7 +69,7 @@ def main():
     # Wait a few seconds
     print('Starting up')
     i = 0
-    while (i < 30):  # allow 5sec for startup
+    while (i < 15):  # allow 5sec for startup
         i += 1
         sleep(0.1)
 
@@ -123,16 +125,18 @@ def main():
                 cy = int(h / 2)
 
             print(str(cx) + " " + str(cy))
+            # draw rectangle
             x, y, w, h = cv2.boundingRect(rect)
-            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)       #draw rectangle
+            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)
             cv2.putText(frame1, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
-            cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)                     #draw cross air
+            # draw cross air
+            cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)
             # cv2.line(frame1, (0,cy), (w,cy), (0,0,255), 2)
             # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
             # cv2.imshow("Show", img)
 
             turret.coordToPulse((cx,cy))
-            turret.fire()
+            # turret.fire()
 
 
         # cv2.imshow("Original", frame2)
@@ -146,6 +150,7 @@ def main():
 
     cv2.destroyAllWindows()
     cam.quit()
+    turret.quit()
 
 
 if __name__ == "__main__":
