@@ -19,6 +19,7 @@ import threading
 from time import sleep
 import modules.Camera as Camera
 import modules.Turret as Turret
+import modules.KeyboardHandler as KeyboardPoller
 
 
 # load config
@@ -36,12 +37,7 @@ def on_click(event, cx, cy, flags, param):
         turret.sendTarget(newcoord,currcoord)
         # turret to position
         # fire if arrived at position
-    if event == cv2.EVENT_MBUTTONDOWN:
-        # turret.fire()
-        print('Test middlemouse')
-
-
-
+        # TODO change frame thickness for a second
 
 
 
@@ -66,7 +62,8 @@ def main(display):
     turret.start()
     turret.armed = True
 
-    # Spawn Controller Thread (Handles input from keyboard)
+    # TODO Spawn Controller Thread (Handles input from keyboard)
+    # KeyboardPoller.WaitKey().thread.start()
 
     # Wait a few seconds
     print('Starting up')
@@ -127,23 +124,42 @@ def main(display):
             x, y, w, h = cv2.boundingRect(rect)
             cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)
             cv2.putText(frame1, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
-            # draw cross air
+            # TODO draw cross air
             cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)
-            # cv2.line(frame1, (0,cy), (w,cy), (0,0,255), 2)
-            # cv2.line(frame1, (cx,0), (cx,h), (0,0,255), 2)
+            cv2.line(frame1, (0,cy), (2*w,cy), (0,0,255), 1)
+            cv2.line(frame1, (cx,0), (cx,2*h), (0,0,255), 1)
             # cv2.imshow("Show", img)
 
             turret.sendTarget(turret.coordToPulse((cx,cy)),  currentXY)
 
+            # TODO all of the motion things
 
-        # cv2.imshow("Original", frame2)
+
         if display == 1:
             cv2.imshow("display", frame1)
+            key = cv2.waitKey(1)
+            # transfer char from opencv window
+            if key > 0:
+                print(key)
+                KeyboardPoller.keypressed.set()
+                KeyboardPoller.key = chr(key)
+
         if cv2.waitKey(1) == 27:  # exit on ESC
             break
 
+        # TODO KeyboardHandler functions
+        #keyboard handler
+        # if KeyboardPoller.keypressed.isSet():
+        #     if KeyboardPoller.key == "a":
+        #         print('You pressed AAAA')
+        #     # reset key polling
+        #     KeyboardPoller.WaitKey().thread.start()
+
+
         frame1 = frame2
         frame2 = cam.get_frame()
+
+
 
     cv2.destroyAllWindows()
     cam.quit()

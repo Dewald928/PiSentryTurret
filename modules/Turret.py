@@ -31,7 +31,7 @@ class Controller(threading.Thread):
         # Driver
         self.driver = ServoDriver(cfg)
         # Behaviour variables
-
+        # TODO add behaviour and smoothness factors
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
@@ -71,11 +71,12 @@ class Controller(threading.Thread):
 
 
     def centerPosition(self):
-        # returns turret  to middle of screen (0,0)
+        # TODO returns turret  to middle of screen (0,0)
         self.sendTarget()
 
     def sendTarget(self, newXY, curXY):
         print('Sending target')
+        # TODO start stepping to new position from current pos
 
         if self.armed and not self.triggertimer.isSet():
             self.fire()
@@ -89,6 +90,7 @@ class Controller(threading.Thread):
     def run(self):
         while (not threadexit.isSet()):
             # print('Turret thread running')
+            # TODO Step each iteration
             sleep(0.01)
             self.xy[0] = self.yPulse
             self.xy[1] = self.xPulse
