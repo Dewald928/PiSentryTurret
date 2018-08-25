@@ -19,7 +19,7 @@ import threading
 from time import sleep
 import modules.Camera as Camera
 import modules.Turret as Turret
-import modules.KeyboardHandler as KeyboardPoller
+import modules.KeyboardHandler as KeyboardHandler
 
 
 # load config
@@ -63,7 +63,7 @@ def main(display):
     turret.armed = True
 
     # TODO Spawn Controller Thread (Handles input from keyboard)
-    KeyboardPoller.WaitKey().thread.start()
+    KeyboardHandler.WaitKey().thread.start()
 
     # Wait a few seconds
     print('Starting up')
@@ -141,33 +141,40 @@ def main(display):
             # transfer char from opencv window
             if key > 0:
                 # print(key)
-                KeyboardPoller.keypressed.set()
-                KeyboardPoller.key = chr(key)
+                KeyboardHandler.keypressed.set()
+                KeyboardHandler.key = chr(key)
 
         if cv2.waitKey(1) == 27:  # exit on ESC
             break
 
         # TODO KeyboardHandler functions
         #keyboard handler
-        if KeyboardPoller.keypressed.isSet():
-            if KeyboardPoller.key == "a":
+        if KeyboardHandler.keypressed.isSet():
+            if KeyboardHandler.key == "a":
                 turret.xMin = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
-            if KeyboardPoller.key == "d":
+            if KeyboardHandler.key == "d":
                 turret.xMax = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
-            if KeyboardPoller.key == "s":
+            if KeyboardHandler.key == "s":
                 turret.yMin = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
-            if KeyboardPoller.key == "w":
+            if KeyboardHandler.key == "w":
                 turret.yMax = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
+            if KeyboardHandler.key == "r": # reset calibration settings
+                turret.resetCalibration()
+            if KeyboardHandler.key == "x":
+                turret.flipX()
+            if KeyboardHandler.key == "z":
+                turret.flipY()
+
             # reset key polling
-            KeyboardPoller.WaitKey().thread.start()
+            KeyboardHandler.WaitKey().thread.start()
 
 
         frame1 = frame2

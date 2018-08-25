@@ -52,6 +52,8 @@ class Controller(threading.Thread):
         self.yPulse = 0.0
         self.firing = False
         print(self.xRatio, self.yRatio, 'x and y ratio')
+        self.cfg = cfg
+        # TODO flip x and y
 
         threading.Thread.__init__(self)
 
@@ -71,10 +73,34 @@ class Controller(threading.Thread):
         t.start()
         t.cancel() # proper termination
 
+    def resetCalibration(self):
+        self.xMin = float(self.cfg['controller']['xMin'])
+        self.xMax = float(self.cfg['controller']['xMax'])
+        self.yMin = float(self.cfg['controller']['yMin'])
+        self.yMax = float(self.cfg['controller']['yMax'])
+        self.xRatio = (self.camw) / (self.xMax - self.xMin)
+        self.yRatio = (self.camh) / (self.yMax - self.yMin)
+        print('Calabrations are Reset')
+
+    def flipX(self):
+        oldxMin = self.xMin
+        oldxMax = self.xMax
+        self.xMin = oldxMax
+        self.xMax = oldxMin
+        self.xRatio = (self.camw) / (self.xMax - self.xMin)
+        print('X flipped')
+
+    def flipY(self):
+        oldyMin = self.yMin
+        oldyMax = self.yMax
+        self.yMin = oldyMax
+        self.yMax = oldyMin
+        self.yRatio = (self.camh / (self.yMax - self.yMin))
+        print('Y flipped')
 
     def centerPosition(self):
         # TODO returns turret  to middle of screen (0,0)
-        self.sendTarget()
+        print('midlle thingy')
 
     def sendTarget(self, newXY, curXY):
         print('Sending target')
