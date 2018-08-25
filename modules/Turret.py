@@ -52,14 +52,11 @@ class Controller(threading.Thread):
         self.yPulse = 0.0
         self.firing = False
 
-        print(self.xRatio, self.yRatio)
-
         threading.Thread.__init__(self)
 
     def coordToPulse(self,coord):
         self.xPulse = (float(coord[0])/self.xRatio)+self.xMin
         self.yPulse = ((self.camh - float(coord[1]))/self.yRatio)+self.yMin
-        # print(xPulse,yPulse)
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
@@ -71,14 +68,6 @@ class Controller(threading.Thread):
         t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
         t.start()
         t.cancel() # proper termination
-
-    def fireOnce(self):
-        print('skiet skiet')
-        self.driver.move(self.servoTrigger, self.triggerHomePos)
-        sleep(0.2)
-        self.driver.move(self.servoTrigger, self.triggerFirePos)
-        sleep(0.2)
-        self.driver.move(self.servoTrigger, self.triggerHomePos)
 
 
     def centerPosition(self):

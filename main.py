@@ -47,7 +47,7 @@ def on_click(event, cx, cy, flags, param):
 
 
 
-def main():
+def main(display):
     global cam, turret
     # =======================
     # ------ SETUP ----------
@@ -71,13 +71,12 @@ def main():
     # Wait a few seconds
     print('Starting up')
     i = 0
-    while (i < 15):  # allow 5sec for startup
+    while (i < 5):  # allow 5sec for startup
         i += 1
         sleep(0.1)
 
 
 
-    display = int(cfg['camera']['display'])
     if display == 1:
         cv2.namedWindow('display')
         cv2.setMouseCallback('display', on_click, 0)
@@ -152,4 +151,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    display = 0 #default no display
+    try:
+        display = int(sys.argv[1])
+    except:
+        print('No display. arg 0 = no display, 1 = display (needed for calibration')
+    main(display)
