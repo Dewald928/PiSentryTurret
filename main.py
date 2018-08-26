@@ -20,6 +20,7 @@ from time import sleep
 import modules.Camera as Camera
 import modules.Turret as Turret
 import modules.KeyboardHandler as KeyboardHandler
+import modules.Tracker as Tracker
 
 
 # load config
@@ -64,6 +65,8 @@ def main(display):
 
     # TODO Spawn Controller Thread (Handles input from keyboard)
     KeyboardHandler.WaitKey().thread.start()
+    tracker = Tracker.Track(cfg, display)
+
 
     # Wait a few seconds
     print('Starting up')
@@ -80,7 +83,7 @@ def main(display):
 
 
 
-
+    # TODO select between manual and auto
 
 
     # ======================================
@@ -144,9 +147,6 @@ def main(display):
                 KeyboardHandler.keypressed.set()
                 KeyboardHandler.key = chr(key)
 
-        if cv2.waitKey(1) == 27:  # exit on ESC
-            break
-
         # TODO KeyboardHandler functions
         #keyboard handler
         if KeyboardHandler.keypressed.isSet():
@@ -172,6 +172,23 @@ def main(display):
                 turret.flipX()
             if KeyboardHandler.key == "z":
                 turret.flipY()
+            if KeyboardHandler.key == "1":
+                print('Automatic Mode Selected')
+                tracker.mode = int(KeyboardHandler.key)
+            if KeyboardHandler.key == " ": # spacebar arms and disarms system
+                turret.armed = not turret.armed
+                tracker.mode = 0
+                if turret.armed == True:
+                    print('System Armed')
+                else:
+                    print('System Disarmed')
+            if KeyboardHandler.key == chr(27): # quit program safely
+                print("Exiting...")
+                turret.quit()
+                cam.quit()
+                cv2.destroyAllWindows()
+                break
+
 
             # reset key polling
             KeyboardHandler.WaitKey().thread.start()

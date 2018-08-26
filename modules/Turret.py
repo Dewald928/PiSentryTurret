@@ -53,7 +53,6 @@ class Controller(threading.Thread):
         self.firing = False
         print(self.xRatio, self.yRatio, 'x and y ratio')
         self.cfg = cfg
-        # TODO flip x and y
 
         threading.Thread.__init__(self)
 
@@ -100,7 +99,7 @@ class Controller(threading.Thread):
 
     def centerPosition(self):
         # TODO returns turret  to middle of screen (0,0)
-        print('midlle thingy')
+        print('Centering...')
 
     def sendTarget(self, newXY, curXY):
         print('Sending target')
