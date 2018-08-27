@@ -23,3 +23,4 @@ class Cam :
 
     def quit(self):
         self.cam.release()
+

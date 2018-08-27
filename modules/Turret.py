@@ -2,10 +2,7 @@
 
 import threading
 from time import sleep
-try:
-    from modules.drivers.ServoDriverController import ServoDriver
-except:
-    print("Could not load servo driver from turrent class")
+from modules.drivers.ServoDriverController import ServoDriver
 
 # ============================================================================
 # Turret thread that moves the servos to the correct locations corresponding
@@ -56,14 +53,14 @@ class Controller(threading.Thread):
 
         threading.Thread.__init__(self)
 
-    def coordToPulse(self,coord):
+    def coord_to_pulse(self,coord):
         self.xPulse = (float(coord[0])/self.xRatio)+self.xMin
         self.yPulse = ((self.camh - float(coord[1]))/self.yRatio)+self.yMin
-        print(self.xPulse, self.yPulse)
+        print('Coord to pulse:', self.xPulse, self.yPulse)
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
-        print('skiet skiet')
+        print('BANG!')
         self.driver.move(self.servoTrigger,self.triggerHomePos)
         sleep(0.2)
         self.driver.move(self.servoTrigger,self.triggerFirePos)
@@ -72,24 +69,24 @@ class Controller(threading.Thread):
         t.start()
         t.cancel() # proper termination
 
-    def resetCalibration(self):
+    def reset_calibration(self):
         self.xMin = float(self.cfg['controller']['xMin'])
         self.xMax = float(self.cfg['controller']['xMax'])
         self.yMin = float(self.cfg['controller']['yMin'])
         self.yMax = float(self.cfg['controller']['yMax'])
-        self.xRatio = (self.camw) / (self.xMax - self.xMin)
-        self.yRatio = (self.camh) / (self.yMax - self.yMin)
+        self.xRatio = self.camw / (self.xMax - self.xMin)
+        self.yRatio = self.camh / (self.yMax - self.yMin)
         print('Calabrations are Reset')
 
-    def flipX(self):
+    def flipx(self):
         oldxMin = self.xMin
         oldxMax = self.xMax
         self.xMin = oldxMax
         self.xMax = oldxMin
-        self.xRatio = (self.camw) / (self.xMax - self.xMin)
+        self.xRatio = self.camw / (self.xMax - self.xMin)
         print('X flipped')
 
-    def flipY(self):
+    def flipy(self):
         oldyMin = self.yMin
         oldyMax = self.yMax
         self.yMin = oldyMax
@@ -97,11 +94,13 @@ class Controller(threading.Thread):
         self.yRatio = (self.camh / (self.yMax - self.yMin))
         print('Y flipped')
 
-    def centerPosition(self):
+    def center_position(self):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
+        self.armed = False
+        self.send_target((0.0,0.0),(0.0,0.0))
 
-    def sendTarget(self, newXY, curXY):
+    def send_target(self, newXY, curXY):
         print('Sending target')
         # TODO start stepping to new position from current pos
 
@@ -110,8 +109,8 @@ class Controller(threading.Thread):
 
     def quit(self): # proper termination of thread
         global threadexit
-        self.centerPosition()
-        sleep(1)
+        self.center_position()
+        sleep(2)
         threadexit.set()
 
     def run(self):

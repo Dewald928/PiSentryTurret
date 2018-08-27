@@ -27,32 +27,42 @@ import modules.Tracker as Tracker
 from configobj import ConfigObj  # cool read and write config file
 cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
-
+ix, iy = 60,60
 # mouse click callback event
-def on_click(event, cx, cy, flags, param):
+def on_click(event, cx, cy, flags, cam):
+    global ix, iy
     if event == cv2.EVENT_LBUTTONDOWN:
-        print("Moving to " + str(cx), str(cy))
+        print("Moving to pixel coordinate: " + str(cx), str(cy))
+        cv2.circle(displayframe, (60, 60), 10, (0, 0, 255), 3)
         coords = (cx,cy)
-        newcoord = turret.coordToPulse(coords)
+        newcoord = turret.coord_to_pulse(coords)
         currcoord = (turret.xy[0],turret.xy[1])
-        turret.sendTarget(newcoord,currcoord)
+        turret.send_target(newcoord,currcoord)
         # turret to position
         # fire if arrived at position
         # TODO change frame thickness for a second
+    if event == cv2.EVENT_MOUSEMOVE:
+        print("Blah blah to " + str(cx), str(cy))
+        ix,iy = cx,cy
+
+def draw_crossair():
+    global ix, iy, displayframe
+    cv2.circle(displayframe, (ix, iy), 5, (0, 0, 255), 1)
+    cv2.line(displayframe, (0, iy), (160, iy), (0, 0, 255), 1)
+    cv2.line(displayframe, (ix, 0), (ix, 120), (0, 0, 255), 1)
 
 
-
-
+displayframe = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
 
 def main(display):
-    global cam, turret
+    global cam, turret, ix,iy, displayframe
     # =======================
     # ------ SETUP ----------
     # =======================
 
     # Create camera object
     cam = Camera.Cam(cfg)
-    frame1 = cam.get_frame()
+    frame = cam.get_frame()
     frame2 = cam.get_frame()
 
 
@@ -65,22 +75,23 @@ def main(display):
 
     # TODO Spawn Controller Thread (Handles input from keyboard)
     KeyboardHandler.WaitKey().thread.start()
+
+    #motion tracking options
     tracker = Tracker.Track(cfg, display)
 
 
     # Wait a few seconds
     print('Starting up')
     i = 0
-    while (i < 5):  # allow 5sec for startup
+    while i < 5:  # allow 5sec for startup
         i += 1
         sleep(0.1)
 
-
-
+    #display
     if display == 1:
         cv2.namedWindow('display')
-        cv2.setMouseCallback('display', on_click, 0)
-
+        # displayframe = frame
+        cv2.setMouseCallback('display', on_click, cam) # TODO where to put this
 
 
     # TODO select between manual and auto
@@ -93,53 +104,70 @@ def main(display):
 
         #current pulse position
         currentXY = turret.xy
-
-        d = cv2.absdiff(frame1, frame2)
-
-        grey = cv2.cvtColor(d, cv2.COLOR_BGR2GRAY)
-
-        blur = cv2.GaussianBlur(grey, (5, 5), 0)
-
-        ret, th = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
-
-        kernel = np.ones((3, 3), np.uint8)
-        dilated = cv2.dilate(th, kernel, iterations=10)
-
-        eroded = cv2.erode(dilated, kernel, iterations=10)
-
-        img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-        if len(contours) != 0:
-            rect = max(contours, key=cv2.contourArea)
-
-            M = cv2.moments(rect)
-
-            # centre of mass
-            try:
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
-            except:
-                cx = int(w / 2)
-                cy = int(h / 2)
-
-            print(str(cx) + " " + str(cy))
-            # draw rectangle
-            x, y, w, h = cv2.boundingRect(rect)
-            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 0, 255), 1)
-            cv2.putText(frame1, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
-            # TODO draw cross air
-            cv2.circle(frame1, (cx, cy), 5, (0, 0, 255), 1)
-            cv2.line(frame1, (0,cy), (2*w,cy), (0,0,255), 1)
-            cv2.line(frame1, (cx,0), (cx,2*h), (0,0,255), 1)
-            # cv2.imshow("Show", img)
-
-            turret.sendTarget(turret.coordToPulse((cx,cy)),  currentXY)
-
-            # TODO all of the motion things
-
+        frame = cam.get_frame()
 
         if display == 1:
-            cv2.imshow("display", frame1)
+            displayframe = frame
+
+
+# manual mode--------------------------------------------------
+        if tracker.mode == 0:
+            sleep(0.5)
+
+
+
+
+
+# automatic mode 1-----------------------------------------------
+        if tracker.mode == 1:
+
+            d = cv2.absdiff(frame, frame2)
+
+            grey = cv2.cvtColor(d, cv2.COLOR_BGR2GRAY)
+
+            blur = cv2.GaussianBlur(grey, (5, 5), 0)
+
+            ret, th = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+
+            kernel = np.ones((3, 3), np.uint8)
+            dilated = cv2.dilate(th, kernel, iterations=10)
+
+            eroded = cv2.erode(dilated, kernel, iterations=10)
+
+            img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+            if len(contours) != 0:
+                rect = max(contours, key=cv2.contourArea)
+
+                M = cv2.moments(rect)
+
+                # centre of mass
+                try:
+                    cx = int(M['m10'] / M['m00'])
+                    cy = int(M['m01'] / M['m00'])
+                except:
+                    cx = int(w / 2)
+                    cy = int(h / 2)
+
+                print(str(cx) + " " + str(cy))
+                # draw rectangle
+                x, y, w, h = cv2.boundingRect(rect)
+                cv2.rectangle(displayframe, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                cv2.putText(displayframe, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
+                # TODO draw cross air
+                cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
+                cv2.line(displayframe, (0,cy), (2*w,cy), (0,0,255), 1)
+                cv2.line(displayframe, (cx,0), (cx,2*h), (0,0,255), 1)
+
+                turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
+
+                # TODO all of the motion things
+
+# display----------------------------------------------------
+        if display == 1:
+            draw_crossair()
+            cv2.imshow("display", displayframe)
+            draw_crossair()
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
@@ -147,41 +175,50 @@ def main(display):
                 KeyboardHandler.keypressed.set()
                 KeyboardHandler.key = chr(key)
 
+
+
+
         # TODO KeyboardHandler functions
-        #keyboard handler
+# keyboard handler---------------------------
+# ---- Calibration--------------
         if KeyboardHandler.keypressed.isSet():
-            if KeyboardHandler.key == "a":
+            if KeyboardHandler.key == "a": # lower limit x
                 turret.xMin = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
-                print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
-            if KeyboardHandler.key == "d":
+                print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
+            if KeyboardHandler.key == "d": # upper limit x
                 turret.xMax = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
-                print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees')
-            if KeyboardHandler.key == "s":
+                print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
+            if KeyboardHandler.key == "s": # lower y limit
                 turret.yMin = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
-                print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
-            if KeyboardHandler.key == "w":
+                print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
+            if KeyboardHandler.key == "w": # upper x limit
                 turret.yMax = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
-                print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees')
+                print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
             if KeyboardHandler.key == "r": # reset calibration settings
-                turret.resetCalibration()
-            if KeyboardHandler.key == "x":
-                turret.flipX()
-            if KeyboardHandler.key == "z":
-                turret.flipY()
-            if KeyboardHandler.key == "1":
+                turret.reset_calibration()
+            if KeyboardHandler.key == "x": # flip x
+                turret.flipx()
+            if KeyboardHandler.key == "z": # flip y
+                turret.flipy()
+# Mode selection----------------------------------------
+            if KeyboardHandler.key == "0": # manual mode
+                print('Manual Mode Selected')
+                tracker.mode = int(KeyboardHandler.key)
+            if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system
                 turret.armed = not turret.armed
-                tracker.mode = 0
+                # tracker.mode = 0
                 if turret.armed == True:
                     print('System Armed')
                 else:
                     print('System Disarmed')
+# Smoothness and Sesitivity--------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
                 turret.quit()
@@ -189,12 +226,11 @@ def main(display):
                 cv2.destroyAllWindows()
                 break
 
-
             # reset key polling
             KeyboardHandler.WaitKey().thread.start()
 
 
-        frame1 = frame2
+        frame = frame2
         frame2 = cam.get_frame()
 
 
@@ -209,5 +245,5 @@ if __name__ == "__main__":
     try:
         display = int(sys.argv[1])
     except:
-        print('No display. arg 0 = no display, 1 = display (needed for calibration')
+        print('No display. argv: 0 = no display, 1 = display (needed for calibration)')
     main(display)

@@ -18,3 +18,4 @@ class Track():
         self.display = display
         self.mode = 0 #0-maunal, 1-auto (other modes like face detection can be added later)
 
+
