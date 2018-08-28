@@ -43,10 +43,10 @@ def on_click(event, cx, cy, flags, cam):
         # fire if arrived at position
         # TODO change frame thickness for a second
     if event == cv2.EVENT_MOUSEMOVE:
-        print("Blah blah to " + str(cx), str(cy))
+        # print("Blah blah to " + str(cx), str(cy))
         ix,iy = cx,cy
         coords = (cx, cy)
-        newcoord = turret.coord_to_pulse(coords)
+        # newcoord = turret.coord_to_pulse(coords)
 
 
 def draw_crossair():

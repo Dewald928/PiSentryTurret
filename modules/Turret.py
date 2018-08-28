@@ -33,12 +33,12 @@ class Controller(threading.Thread):
         self.triggertimer = threading.Event()
         self.armed = False
         self.center = [0.0,0.0] #center of screen
-        self.xy = self.center # current position
-        self.widthPre = int(cfg['camera']['width'])
-        self.heightPre = int(cfg['camera']['height'])
-        self.scaledown = int(cfg['camera']['scaledown'])  # faster processing
-        self.camw = int(self.widthPre / self.scaledown)
-        self.camh = int(self.heightPre / self.scaledown)
+        self.xy = self.center[:] # current position
+        widthPre = int(cfg['camera']['width'])
+        heightPre = int(cfg['camera']['height'])
+        scaledown = int(cfg['camera']['scaledown'])  # faster processing
+        self.camw = int(widthPre / scaledown)
+        self.camh = int(heightPre / scaledown)
         self.xMin = float(cfg['controller']['xMin'])
         self.xMax = float(cfg['controller']['xMax'])
         self.yMin = float(cfg['controller']['yMin'])
@@ -47,9 +47,17 @@ class Controller(threading.Thread):
         self.yRatio = (self.camh)/(self.yMax-self.yMin)
         self.xPulse = 0.0
         self.yPulse = 0.0
-        self.firing = False
-        print(self.xRatio, self.yRatio, 'x and y ratio')
         self.cfg = cfg
+        # test variables
+        self.fps = 1.5 #frame per seconds  *** movement is wild if set too high ***
+        self.stepsleep = 0.05 #time per step (smoothness)
+        self.deltaxy = [0.0, 0.0]  # current move
+        self.deltaxylast = [0.0, 0.0]  # prior move
+        self.stepxy = [0.0, 0.0]  # xy per step
+        self.steps = (1.0 / self.fps) / self.stepsleep  # steps per frame
+        self.stepcounter = 0  # motion step counter
+        self.firesensitivity = .02  # how trigger happy
+
 
         threading.Thread.__init__(self)
 
@@ -103,9 +111,23 @@ class Controller(threading.Thread):
     def send_target(self, newXY, curXY):
         print('Sending target')
         # TODO start stepping to new position from current pos
+        self.deltaxylast = self.deltaxy[:]
+        # subtract distance since capture
+        self.deltaxy[0] = newXY[0] - (self.xy[0] - curXY[0])
+        self.deltaxy[1] = newXY[1] - (self.xy[1] - curXY[1])
+        # stay on newest delta
+        if self.stepcounter > 0:
+            if abs(self.deltaxy[0]) < abs(self.deltaxylast[0]):
+                self.stepxy[0] = 0.0
+            if abs(self.deltaxy[1]) < abs(self.deltaxylast[1]):
+                self.stepxy[1] = 0.0
 
+        # fire if on target
         if self.armed and not self.triggertimer.isSet():
-            self.fire()
+            if (-(self.firesensitivity) < self.deltaxy[0] < self.firesensitivity) and (
+                    -(self.firesensitivity) < self.deltaxy[1] < self.firesensitivity):
+                if not self.deltaxy[0] == 0:
+                    self.fire()
 
     def quit(self): # proper termination of thread
         global threadexit
@@ -114,14 +136,28 @@ class Controller(threading.Thread):
         threadexit.set()
 
     def run(self):
+        global threadexit
         while (not threadexit.isSet()):
             # print('Turret thread running')
             # TODO Step each iteration
-            sleep(0.01)
-            self.xy[0] = self.xPulse
-            self.xy[1] = self.yPulse
-            self.driver.move(self.servoPan, self.xy[0])
-            self.driver.move(self.servoTilt, self.xy[1])
+            sleep(self.stepsleep)
+            if self.stepcounter > 0:  # stepping to target
+                self.xy[0] += self.stepxy[0]
+                self.driver.move(self.servoPan, self.xy[0])
+                self.xy[1] += self.stepxy[1]
+                self.driver.move(self.servoTilt, self.xy[1])
+                self.stepcounter -= 1
+            else:  # set next target
+                self.stepxy[0] = self.deltaxy[0] / self.steps
+                self.stepxy[1] = self.deltaxy[1] / self.steps
+                self.deltaxy = [0.0, 0.0]
+                self.stepcounter = self.steps
+
+            # sleep(0.01)
+            # self.xy[0] = self.xPulse
+            # self.xy[1] = self.yPulse
+            # self.driver.move(self.servoPan, self.xy[0])
+            # self.driver.move(self.servoTilt, self.xy[1])
 
 
 
