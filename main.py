@@ -28,12 +28,13 @@ from configobj import ConfigObj  # cool read and write config file
 cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
 ix, iy = 60,60
+displayframe = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
+
 # mouse click callback event
 def on_click(event, cx, cy, flags, cam):
     global ix, iy
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Moving to pixel coordinate: " + str(cx), str(cy))
-        cv2.circle(displayframe, (60, 60), 10, (0, 0, 255), 3)
         coords = (cx,cy)
         newcoord = turret.coord_to_pulse(coords)
         currcoord = (turret.xy[0],turret.xy[1])
@@ -44,15 +45,17 @@ def on_click(event, cx, cy, flags, cam):
     if event == cv2.EVENT_MOUSEMOVE:
         print("Blah blah to " + str(cx), str(cy))
         ix,iy = cx,cy
+        coords = (cx, cy)
+        newcoord = turret.coord_to_pulse(coords)
+
 
 def draw_crossair():
-    global ix, iy, displayframe
+    global ix, iy, displayframe, cam
     cv2.circle(displayframe, (ix, iy), 5, (0, 0, 255), 1)
-    cv2.line(displayframe, (0, iy), (160, iy), (0, 0, 255), 1)
-    cv2.line(displayframe, (ix, 0), (ix, 120), (0, 0, 255), 1)
+    cv2.line(displayframe, (0, iy), (cam.w, iy), (0, 0, 255), 1)
+    cv2.line(displayframe, (ix, 0), (ix, cam.h), (0, 0, 255), 1)
 
 
-displayframe = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
 
 def main(display):
     global cam, turret, ix,iy, displayframe
@@ -69,7 +72,7 @@ def main(display):
     # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
     turret = Turret.Controller(cfg)
     turret.daemon = True
-    # turret.recenter()
+    turret.center_position()
     turret.start()
     turret.armed = True
 
@@ -90,8 +93,7 @@ def main(display):
     #display
     if display == 1:
         cv2.namedWindow('display')
-        # displayframe = frame
-        cv2.setMouseCallback('display', on_click, cam) # TODO where to put this
+        cv2.setMouseCallback('display', on_click, 0)
 
 
     # TODO select between manual and auto
@@ -112,7 +114,8 @@ def main(display):
 
 # manual mode--------------------------------------------------
         if tracker.mode == 0:
-            sleep(0.5)
+            sleep(0.05)
+            draw_crossair()
 
 
 
@@ -151,13 +154,16 @@ def main(display):
 
                 print(str(cx) + " " + str(cy))
                 # draw rectangle
+                overlay = displayframe.copy()
                 x, y, w, h = cv2.boundingRect(rect)
-                cv2.rectangle(displayframe, (x, y), (x + w, y + h), (0, 0, 255), 1)
-                cv2.putText(displayframe, 'Moth Detected', (x + w + 10, y + h), 0, 0.3, (0, 0, 255))
-                # TODO draw cross air
+                cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
+                opacity = 0.5
+                cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
+                # draw cross air
                 cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
-                cv2.line(displayframe, (0,cy), (2*w,cy), (0,0,255), 1)
-                cv2.line(displayframe, (cx,0), (cx,2*h), (0,0,255), 1)
+                cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
+                cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
+
 
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
@@ -165,20 +171,15 @@ def main(display):
 
 # display----------------------------------------------------
         if display == 1:
-            draw_crossair()
             cv2.imshow("display", displayframe)
-            draw_crossair()
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
-                # print(key)
                 KeyboardHandler.keypressed.set()
                 KeyboardHandler.key = chr(key)
 
 
 
-
-        # TODO KeyboardHandler functions
 # keyboard handler---------------------------
 # ---- Calibration--------------
         if KeyboardHandler.keypressed.isSet():
@@ -210,6 +211,8 @@ def main(display):
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
+                cv2.setMouseCallback('display', on_click, 0)
+                turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system
                 turret.armed = not turret.armed
@@ -219,6 +222,9 @@ def main(display):
                 else:
                     print('System Disarmed')
 # Smoothness and Sesitivity--------------------------------------
+            # TODO Smoothness calibrations
+
+# Exit Program --------------------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
                 turret.quit()
