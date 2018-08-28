@@ -208,10 +208,11 @@ def main(display):
 # Mode selection----------------------------------------
             if KeyboardHandler.key == "0": # manual mode
                 print('Manual Mode Selected')
+                cv2.setMouseCallback('display', on_click, 0)
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
-                cv2.setMouseCallback('display', on_click, 0)
+                # cv2.setMouseCallback('display', lambda *args : None) #TODO disable if developing
                 turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system
