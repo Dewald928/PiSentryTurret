@@ -27,7 +27,7 @@ import modules.Tracker as Tracker
 from configobj import ConfigObj  # cool read and write config file
 cfg = ConfigObj(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
 
-ix, iy = 60,60
+ix, iy = 80,60
 displayframe = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
 
 # mouse click callback event
@@ -67,6 +67,8 @@ def main(display):
     cam = Camera.Cam(cfg)
     frame = cam.get_frame()
     frame2 = cam.get_frame()
+    ix = int(cam.w/2)
+    iy = int(cam.h/2)
 
 
     # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
@@ -175,6 +177,7 @@ def main(display):
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
+                print(key)
                 KeyboardHandler.keypressed.set()
                 KeyboardHandler.key = chr(key)
 
@@ -183,19 +186,19 @@ def main(display):
 # keyboard handler---------------------------
 # ---- Calibration--------------
         if KeyboardHandler.keypressed.isSet():
-            if KeyboardHandler.key == "a": # lower limit x
+            if KeyboardHandler.key == "4": # lower limit x
                 turret.xMin = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
-            if KeyboardHandler.key == "d": # upper limit x
+            if KeyboardHandler.key == "6": # upper limit x
                 turret.xMax = turret.xy[0]
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
-            if KeyboardHandler.key == "s": # lower y limit
+            if KeyboardHandler.key == "5": # lower y limit
                 turret.yMin = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
-            if KeyboardHandler.key == "w": # upper x limit
+            if KeyboardHandler.key == "8": # upper x limit
                 turret.yMax = turret.xy[1]
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
@@ -208,11 +211,13 @@ def main(display):
 # Mode selection----------------------------------------
             if KeyboardHandler.key == "0": # manual mode
                 print('Manual Mode Selected')
-                cv2.setMouseCallback('display', on_click, 0)
+                if display == 1:
+                    cv2.setMouseCallback('display', on_click, 0)
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
-                # cv2.setMouseCallback('display', lambda *args : None) #TODO disable if developing
+                if display == 1:
+                    cv2.setMouseCallback('display', lambda *args : None) #TODO disable if developing
                 turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system
@@ -222,6 +227,18 @@ def main(display):
                     print('System Armed')
                 else:
                     print('System Disarmed')
+# TODO Arrow key control(manual mode) --------------------------------
+            if KeyboardHandler.key == "w": # move up
+                print('move up')
+            if KeyboardHandler.key == "s": # move down
+                print('move down')
+            if KeyboardHandler.key == "a": # move left
+                print('move left')
+            if KeyboardHandler.key == "d": # move right
+                print('move right')
+            if KeyboardHandler.key == chr(13): # fire!
+                print('enter up')
+
 # Smoothness and Sesitivity--------------------------------------
             # TODO Smoothness calibrations
 
