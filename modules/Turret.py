@@ -58,7 +58,6 @@ class Controller(threading.Thread):
         self.stepcounter = 0  # motion step counter
         self.firesensitivity = .02  # how trigger happy
 
-
         threading.Thread.__init__(self)
 
     def coord_to_pulse(self,coord):
@@ -106,7 +105,7 @@ class Controller(threading.Thread):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
-        self.send_target((0.0,0.0),(0.0,0.0))
+        self.send_target(self.center, self.xy)
 
     def send_target(self, newXY, curXY):
         print('Sending target')
@@ -124,10 +123,7 @@ class Controller(threading.Thread):
 
         # fire if on target
         if self.armed and not self.triggertimer.isSet():
-            if (-(self.firesensitivity) < self.deltaxy[0] < self.firesensitivity) and (
-                    -(self.firesensitivity) < self.deltaxy[1] < self.firesensitivity):
-                if not self.deltaxy[0] == 0:
-                    self.fire()
+            self.fire()
 
     def quit(self): # proper termination of thread
         global threadexit

@@ -66,7 +66,7 @@ def main(display):
     # Create camera object
     cam = Camera.Cam(cfg)
     frame = cam.get_frame()
-    frame2 = cam.get_frame()
+    frame2 = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
     ix = int(cam.w/2)
     iy = int(cam.h/2)
 
@@ -92,6 +92,8 @@ def main(display):
         i += 1
         sleep(0.1)
 
+
+
     #display
     if display == 1:
         cv2.namedWindow('display')
@@ -109,6 +111,7 @@ def main(display):
         #current pulse position
         currentXY = turret.xy
         frame = cam.get_frame()
+        frame2 = cam.get_frame()
 
         if display == 1:
             displayframe = frame
@@ -118,6 +121,8 @@ def main(display):
         if tracker.mode == 0:
             sleep(0.05)
             draw_crossair()
+            # if KeyboardHandler.keypressed.isSet():
+
 
 
 
@@ -227,17 +232,31 @@ def main(display):
                     print('System Armed')
                 else:
                     print('System Disarmed')
-# TODO Arrow key control(manual mode) --------------------------------
-            if KeyboardHandler.key == "w": # move up
-                print('move up')
-            if KeyboardHandler.key == "s": # move down
-                print('move down')
-            if KeyboardHandler.key == "a": # move left
-                print('move left')
-            if KeyboardHandler.key == "d": # move right
-                print('move right')
-            if KeyboardHandler.key == chr(13): # fire!
-                print('enter up')
+
+#  Arrow key control(manual mode) --------------------------------
+            increment = 0.1 # TODO muse coord to pulse instead, weird stuffies
+            if KeyboardHandler.key == "w":  # move up
+                turret.xy[1] += increment  # TODO move crossair?
+                iy -= int(increment*90)
+                if turret.xy[1] > 1:
+                    turret.xy[1] = 0.99
+            if KeyboardHandler.key == "s":  # move down
+                turret.xy[1] -= increment
+                iy += int(increment * 90)
+                if turret.xy[1] < -1:
+                    turret.xy[1] = -0.99
+            if KeyboardHandler.key == "a":  # move left
+                turret.xy[0] -= increment
+                ix -= int(increment * 90)
+                if turret.xy[0] < -1:
+                    turret.xy[0] = -0.99
+            if KeyboardHandler.key == "d":  # move right
+                turret.xy[0] += increment
+                ix += int(increment * 90)
+                if turret.xy[0] > 1:
+                    turret.xy[0] = 0.99
+            if KeyboardHandler.key == "f":  # f for fire!, because enter isn't everything :P
+                turret.fire()
 
 # Smoothness and Sesitivity--------------------------------------
             # TODO Smoothness calibrations
