@@ -69,13 +69,14 @@ class Controller(threading.Thread):
 
     def fire(self): # pull trigger thread
         print('BANG!')
-        self.driver.move(self.servoTrigger,self.triggerHomePos)
-        sleep(0.2)
-        self.driver.move(self.servoTrigger,self.triggerFirePos)
-        sleep(0.2)
-        t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
-        t.start()
-        t.cancel() # proper termination
+        self.firing = True
+        # self.driver.move(self.servoTrigger,self.triggerHomePos)
+        # sleep(0.2)
+        # self.driver.move(self.servoTrigger,self.triggerFirePos)
+        # sleep(0.2)
+        # t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
+        # t.start()
+        # t.cancel() # proper termination
 
     def reset_calibration(self):
         self.xMin = float(self.cfg['controller']['xMin'])
@@ -124,6 +125,10 @@ class Controller(threading.Thread):
 
         # fire if on target
         if self.armed and not self.triggertimer.isSet():
+            # fire_thread = threading.Thread(target=self.fire())
+            # fire_thread.daemon = True
+            # fire_thread.start()
+            # fire_thread.join()
             self.fire()
 
     def quit(self): # proper termination of thread
@@ -155,6 +160,8 @@ class Controller(threading.Thread):
             self.xy[1] = self.yPulse
             self.driver.move(self.servoPan, self.xy[0])
             self.driver.move(self.servoTilt, self.xy[1])
+
+
 
 
 

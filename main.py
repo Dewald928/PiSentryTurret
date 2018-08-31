@@ -55,6 +55,26 @@ def draw_crossair():
     cv2.line(displayframe, (0, iy), (cam.w, iy), (0, 0, 255), 1)
     cv2.line(displayframe, (ix, 0), (ix, cam.h), (0, 0, 255), 1)
 
+class FiringThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.daemon = True
+
+    def run(self):
+        global turret
+        while True:
+            if turret.firing:
+                print('BANG!')
+                turret.driver.move(turret.servoTrigger, turret.triggerHomePos)
+                sleep(0.2)
+                turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
+                sleep(0.2)
+                turret.firing = False
+                # t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
+                # t.start()
+                # t.cancel() # proper termination
+
+
 
 
 def main(display):
@@ -73,9 +93,11 @@ def main(display):
 
     # Spawn Turret Thread (Listens and moves servos || if on target && and armed = fire)
     turret = Turret.Controller(cfg)
+    fire_thread = FiringThread()
     turret.daemon = True
     turret.center_position()
     turret.start()
+    fire_thread.start()
     turret.armed = True
 
     # TODO Spawn Controller Thread (Handles input from keyboard)
@@ -170,7 +192,6 @@ def main(display):
                 cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
                 cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
                 cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
-
 
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
@@ -290,3 +311,6 @@ if __name__ == "__main__":
     except:
         print('No display. argv: 0 = no display, 1 = display (needed for calibration)')
     main(display)
+
+
+
