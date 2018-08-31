@@ -32,12 +32,13 @@ displayframe = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']
 
 # mouse click callback event
 def on_click(event, cx, cy, flags, cam):
-    global ix, iy
+    global ix, iy, turret
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Moving to pixel coordinate: " + str(cx), str(cy))
         coords = (cx,cy)
         newcoord = turret.coord_to_pulse(coords)
         currcoord = (turret.xy[0],turret.xy[1])
+        turret.armed = True
         turret.send_target(newcoord,currcoord)
         # turret to position
         # fire if arrived at position
@@ -46,8 +47,10 @@ def on_click(event, cx, cy, flags, cam):
         # print("Blah blah to " + str(cx), str(cy))
         ix,iy = cx,cy
         coords = (cx, cy)
-        # newcoord = turret.coord_to_pulse(coords)
-
+        newcoord = turret.coord_to_pulse(coords)
+        currcoord = (turret.xy[0], turret.xy[1])
+        turret.armed = False
+        turret.send_target(newcoord, currcoord)
 
 def draw_crossair():
     global ix, iy, displayframe, cam
@@ -66,13 +69,10 @@ class FiringThread(threading.Thread):
             if turret.firing:
                 print('BANG!')
                 turret.driver.move(turret.servoTrigger, turret.triggerHomePos)
-                sleep(0.2)
+                sleep(0.2) #tweak for firing speed
                 turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
                 sleep(0.2)
                 turret.firing = False
-                # t = threading.Timer(self.triggerwait, self.triggertimer) # Timer thread that shoots for 3 seconds
-                # t.start()
-                # t.cancel() # proper termination
 
 
 
@@ -100,7 +100,7 @@ def main(display):
     fire_thread.start()
     turret.armed = True
 
-    # TODO Spawn Controller Thread (Handles input from keyboard)
+    # Spawn Controller Thread (Handles input from keyboard)
     KeyboardHandler.WaitKey().thread.start()
 
     #motion tracking options
@@ -122,7 +122,6 @@ def main(display):
         cv2.setMouseCallback('display', on_click, 0)
 
 
-    # TODO select between manual and auto
 
 
     # ======================================
@@ -243,7 +242,7 @@ def main(display):
             if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
                 if display == 1:
-                    cv2.setMouseCallback('display', lambda *args : None) #TODO disable if developing
+                    cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system

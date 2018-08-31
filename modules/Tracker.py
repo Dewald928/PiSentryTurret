@@ -16,6 +16,6 @@ class Track():
 
     def __init__(self, cfg, display):
         self.display = display
-        self.mode = 1 #0-maunal, 1-auto (other modes like face detection can be added later)
+        self.mode = 0 #0-maunal, 1-auto (other modes like face detection can be added later)
 
 

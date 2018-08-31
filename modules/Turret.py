@@ -29,12 +29,16 @@ class Controller(threading.Thread):
         self.driver = ServoDriver(cfg)
         # Behaviour variables
         # TODO add behaviour and smoothness factors
+        self.active_smoothing = True
+        self.smoothing_factor = 0.9 # larger is smoother up to 1
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
-        self.firing = True
+        self.firing = False
         self.center = [0.0,0.0] #center of screen
         self.xy = self.center[:] # current position
+        self.oldxy = self.center[:]
+        self.possiblexy = self.center[:]
         widthPre = int(cfg['camera']['width'])
         heightPre = int(cfg['camera']['height'])
         scaledown = int(cfg['camera']['scaledown'])  # faster processing
@@ -68,7 +72,6 @@ class Controller(threading.Thread):
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
-        print('BANG!')
         self.firing = True
         # self.driver.move(self.servoTrigger,self.triggerHomePos)
         # sleep(0.2)
@@ -109,26 +112,24 @@ class Controller(threading.Thread):
         self.armed = False
         self.send_target([-self.xy[0]+self.center[0], -self.xy[1]+self.center[1]], self.xy)
 
-    def send_target(self, newXY, curXY):
+    def send_target(self, newXYpulse, curXYpulse):
         print('Sending target')
         # TODO start stepping to new position from current pos
-        self.deltaxylast = self.deltaxy[:]
-        # subtract distance since capture
-        self.deltaxy[0] = newXY[0] - (self.xy[0] - curXY[0])
-        self.deltaxy[1] = newXY[1] - (self.xy[1] - curXY[1])
-        # stay on newest delta
-        if self.stepcounter > 0:
-            if abs(self.deltaxy[0]) < abs(self.deltaxylast[0]):
-                self.stepxy[0] = 0.0
-            if abs(self.deltaxy[1]) < abs(self.deltaxylast[1]):
-                self.stepxy[1] = 0.0
+        # self.deltaxylast = self.deltaxy[:]
+        # # subtract distance since capture
+        # self.deltaxy[0] = newXY[0] - (self.xy[0] - curXY[0])
+        # self.deltaxy[1] = newXY[1] - (self.xy[1] - curXY[1])
+        # # stay on newest delta
+        # if self.stepcounter > 0:
+        #     if abs(self.deltaxy[0]) < abs(self.deltaxylast[0]):
+        #         self.stepxy[0] = 0.0
+        #     if abs(self.deltaxy[1]) < abs(self.deltaxylast[1]):
+        #         self.stepxy[1] = 0.0
+        self.oldxy = curXYpulse
+        self.possiblexy = newXYpulse
 
         # fire if on target
         if self.armed and not self.triggertimer.isSet():
-            # fire_thread = threading.Thread(target=self.fire())
-            # fire_thread.daemon = True
-            # fire_thread.start()
-            # fire_thread.join()
             self.fire()
 
     def quit(self): # proper termination of thread
@@ -142,6 +143,8 @@ class Controller(threading.Thread):
         while (not threadexit.isSet()):
             # print('Turret thread running')
             # TODO Step each iteration
+            # TODO anticipation
+            # TODO Active smoothing
             # sleep(self.stepsleep)
             # if self.stepcounter > 0:  # stepping to target
             #     self.xy[0] += self.stepxy[0]
@@ -156,8 +159,15 @@ class Controller(threading.Thread):
             #     self.stepcounter = self.steps
 
             sleep(0.01)
-            self.xy[0] = self.xPulse
-            self.xy[1] = self.yPulse
+            if self.active_smoothing:
+                xdiff = self.possiblexy[0] - self.oldxy[0]
+                ydiff = self.possiblexy[1] - self.oldxy[1]
+                self.xy[0] = self.oldxy[0] + xdiff * (1 - self.smoothing_factor)
+                self.xy[1] = self.oldxy[1] + ydiff * (1 - self.smoothing_factor)
+
+            self.oldxy = self.xy
+            # self.xy[0] = self.xPulse
+            # self.xy[1] = self.yPulse
             self.driver.move(self.servoPan, self.xy[0])
             self.driver.move(self.servoTilt, self.xy[1])
 
