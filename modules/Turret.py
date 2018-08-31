@@ -32,6 +32,7 @@ class Controller(threading.Thread):
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
+        self.firing = True
         self.center = [0.0,0.0] #center of screen
         self.xy = self.center[:] # current position
         widthPre = int(cfg['camera']['width'])
@@ -105,7 +106,7 @@ class Controller(threading.Thread):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
-        self.send_target(self.center, self.xy)
+        self.send_target([-self.xy[0]+self.center[0], -self.xy[1]+self.center[1]], self.xy)
 
     def send_target(self, newXY, curXY):
         print('Sending target')
@@ -136,24 +137,24 @@ class Controller(threading.Thread):
         while (not threadexit.isSet()):
             # print('Turret thread running')
             # TODO Step each iteration
-            sleep(self.stepsleep)
-            if self.stepcounter > 0:  # stepping to target
-                self.xy[0] += self.stepxy[0]
-                self.driver.move(self.servoPan, self.xy[0])
-                self.xy[1] += self.stepxy[1]
-                self.driver.move(self.servoTilt, self.xy[1])
-                self.stepcounter -= 1
-            else:  # set next target
-                self.stepxy[0] = self.deltaxy[0] / self.steps
-                self.stepxy[1] = self.deltaxy[1] / self.steps
-                self.deltaxy = [0.0, 0.0]
-                self.stepcounter = self.steps
+            # sleep(self.stepsleep)
+            # if self.stepcounter > 0:  # stepping to target
+            #     self.xy[0] += self.stepxy[0]
+            #     self.driver.move(self.servoPan, self.xy[0])
+            #     self.xy[1] += self.stepxy[1]
+            #     self.driver.move(self.servoTilt, self.xy[1])
+            #     self.stepcounter -= 1
+            # else:  # set next target
+            #     self.stepxy[0] = self.deltaxy[0] / self.steps
+            #     self.stepxy[1] = self.deltaxy[1] / self.steps
+            #     self.deltaxy = [0.0, 0.0]
+            #     self.stepcounter = self.steps
 
-            # sleep(0.01)
-            # self.xy[0] = self.xPulse
-            # self.xy[1] = self.yPulse
-            # self.driver.move(self.servoPan, self.xy[0])
-            # self.driver.move(self.servoTilt, self.xy[1])
+            sleep(0.01)
+            self.xy[0] = self.xPulse
+            self.xy[1] = self.yPulse
+            self.driver.move(self.servoPan, self.xy[0])
+            self.driver.move(self.servoTilt, self.xy[1])
 
 
 

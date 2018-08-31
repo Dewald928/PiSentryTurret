@@ -66,7 +66,7 @@ def main(display):
     # Create camera object
     cam = Camera.Cam(cfg)
     frame = cam.get_frame()
-    frame2 = np.zeros((int(cfg['camera']['height']),int(cfg['camera']['width']),3), np.uint8)
+    frame2 = cam.get_frame()
     ix = int(cam.w/2)
     iy = int(cam.h/2)
 
@@ -227,36 +227,36 @@ def main(display):
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == " ": # spacebar arms and disarms system
                 turret.armed = not turret.armed
-                # tracker.mode = 0
                 if turret.armed == True:
                     print('System Armed')
                 else:
                     print('System Disarmed')
 
 #  Arrow key control(manual mode) --------------------------------
-            increment = 0.1 # TODO muse coord to pulse instead, weird stuffies
-            if KeyboardHandler.key == "w":  # move up
-                turret.xy[1] += increment  # TODO move crossair?
-                iy -= int(increment*90)
-                if turret.xy[1] > 1:
-                    turret.xy[1] = 0.99
-            if KeyboardHandler.key == "s":  # move down
-                turret.xy[1] -= increment
-                iy += int(increment * 90)
-                if turret.xy[1] < -1:
-                    turret.xy[1] = -0.99
-            if KeyboardHandler.key == "a":  # move left
-                turret.xy[0] -= increment
-                ix -= int(increment * 90)
-                if turret.xy[0] < -1:
-                    turret.xy[0] = -0.99
-            if KeyboardHandler.key == "d":  # move right
-                turret.xy[0] += increment
-                ix += int(increment * 90)
-                if turret.xy[0] > 1:
-                    turret.xy[0] = 0.99
-            if KeyboardHandler.key == "f":  # f for fire!, because enter isn't everything :P
-                turret.fire()
+            if tracker.mode == 0:
+                increment = 0.1 # TODO muse coord to pulse instead, weird stuffies
+                if KeyboardHandler.key == "w":  # move up
+                    turret.xy[1] += increment
+                    iy -= int(increment*90)
+                    if turret.xy[1] > 1:
+                        turret.xy[1] = 0.99
+                if KeyboardHandler.key == "s":  # move down
+                    turret.xy[1] -= increment
+                    iy += int(increment * 90)
+                    if turret.xy[1] < -1:
+                        turret.xy[1] = -0.99
+                if KeyboardHandler.key == "a":  # move left
+                    turret.xy[0] -= increment
+                    ix -= int(increment * 90)
+                    if turret.xy[0] < -1:
+                        turret.xy[0] = -0.99
+                if KeyboardHandler.key == "d":  # move right
+                    turret.xy[0] += increment
+                    ix += int(increment * 90)
+                    if turret.xy[0] > 1:
+                        turret.xy[0] = 0.99
+                if KeyboardHandler.key == "f":  # f for fire!, because enter isn't everything :P
+                    turret.fire()
 
 # Smoothness and Sesitivity--------------------------------------
             # TODO Smoothness calibrations
