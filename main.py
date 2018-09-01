@@ -98,7 +98,6 @@ def main(display):
     turret.center_position()
     turret.start()
     fire_thread.start()
-    turret.armed = True
 
     # Spawn Controller Thread (Handles input from keyboard)
     KeyboardHandler.WaitKey().thread.start()
@@ -254,27 +253,31 @@ def main(display):
 
 #  Arrow key control(manual mode) --------------------------------
             if tracker.mode == 0:
-                increment = 0.1 # TODO muse coord to pulse instead, weird stuffies
+                increment = 5 # number of pixels increments
                 if KeyboardHandler.key == "w":  # move up
-                    turret.xy[1] += increment
-                    iy -= int(increment*90)
-                    if turret.xy[1] > 1:
-                        turret.xy[1] = 0.99
+                    iy -= increment
+                    turret.send_target(turret.coord_to_pulse((ix,iy)),currentXY)
+                    if iy < 0 : # out of screen limiting
+                        iy = 0
+                        turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
                 if KeyboardHandler.key == "s":  # move down
-                    turret.xy[1] -= increment
-                    iy += int(increment * 90)
-                    if turret.xy[1] < -1:
-                        turret.xy[1] = -0.99
+                    iy += increment
+                    turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
+                    if iy > cam.h :
+                        iy = cam.h
+                        turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
                 if KeyboardHandler.key == "a":  # move left
-                    turret.xy[0] -= increment
-                    ix -= int(increment * 90)
-                    if turret.xy[0] < -1:
-                        turret.xy[0] = -0.99
+                    ix -= increment
+                    turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
+                    if ix < 0 :
+                        ix = 0
+                        turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
                 if KeyboardHandler.key == "d":  # move right
-                    turret.xy[0] += increment
-                    ix += int(increment * 90)
-                    if turret.xy[0] > 1:
-                        turret.xy[0] = 0.99
+                    ix += increment
+                    turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
+                    if ix > cam.w :
+                        ix = cam.w
+                        turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
                 if KeyboardHandler.key == "f":  # f for fire!, because enter isn't everything :P
                     turret.fire()
 
