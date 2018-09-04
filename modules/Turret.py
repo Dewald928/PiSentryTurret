@@ -30,7 +30,7 @@ class Controller(threading.Thread):
         # Behaviour variables
         # TODO add behaviour and smoothness factors
         self.active_smoothing = True
-        self.smoothing_factor = 0.8 # larger is smoother up to 1, but also slower...
+        self.smoothing_factor = 0.7 # larger is smoother up to 1, but also slower...
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
