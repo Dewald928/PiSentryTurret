@@ -85,8 +85,8 @@ def main(display):
 
     # Create camera object
     cam = Camera.Cam(cfg)
-    frame = cam.get_frame()
-    frame2 = cam.get_frame()
+    fading_factor = 0.05 # TODO put in config
+    min_area = 500 # TODO in config
     ix = int(cam.w/2)
     iy = int(cam.h/2)
 
@@ -119,7 +119,9 @@ def main(display):
             cv2.setMouseCallback('display', on_click, 0)
 
 
-
+    #initialize the first and average frame
+    frame = cam.get_frame()
+    avg = None
     print('Ready!')
     # ======================================
     # ------------- LOOP -------------------
@@ -128,8 +130,13 @@ def main(display):
 
         #current pulse position
         currentXY = turret.xy
+
+        #grab current frame
         frame = cam.get_frame()
-        frame2 = cam.get_frame()
+
+        # break if frame couldn't be captures
+        if frame is None:
+            break
 
         if display == 1:
             displayframe = frame
@@ -145,54 +152,97 @@ def main(display):
 
 # automatic mode 1-----------------------------------------------
         if tracker.mode == 1:
+            # convert to grayscale and apply blur
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            blur = cv2.GaussianBlur(gray, (21,21), 0) #this kernel size can be changed (5,5)
 
-            d = cv2.absdiff(frame, frame2)
+            # if the average frame is None, initialize it
+            if avg is None:
+                print("[INFO] Starting background frame...")
+                avg = blur.copy().astype("float")
+                continue
 
-            grey = cv2.cvtColor(d, cv2.COLOR_BGR2GRAY)
+            # accumulate moving averages from the current and previous frames
+            # get the difference of current and average frames
+            # make all values above threshold white and others black
+            cv2.accumulateWeighted(blur, avg, fading_factor)
+            frame_delta = cv2.absdiff(blur, cv2.convertScaleAbs(avg))
+            thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)
 
-            blur = cv2.GaussianBlur(grey, (5, 5), 0)
-
-            ret, th = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
-
+            # dilate threshold to make a blob and get the contours
             kernel = np.ones((3, 3), np.uint8)
-            dilated = cv2.dilate(th, kernel, iterations=10)
+            dilated = cv2.dilate(thresh, kernel, iterations=10)
+            contours = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
 
-            eroded = cv2.erode(dilated, kernel, iterations=10)
-
-            img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            # loop over contours
+            for c in contours:
+                # if contour is too small, ignore
+                if cv2.contourArea(c) < min_area:
+                    continue
 
             if len(contours) != 0:
+                # get max bounding box
                 rect = max(contours, key=cv2.contourArea)
-
+                if cv2.minAreaRect(rect) < min_area:
+                    continue
+                # get center of area
                 M = cv2.moments(rect)
+                cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
 
-                # centre of mass
-                try:
-                    cx = int(M['m10'] / M['m00'])
-                    cy = int(M['m01'] / M['m00'])
-                except:
-                    cx = int(w / 2)
-                    cy = int(h / 2)
 
-                print(str(cx) + " " + str(cy))
-                # draw rectangle
-                overlay = displayframe.copy()
-                x, y, w, h = cv2.boundingRect(rect)
-                cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
-                opacity = 0.5
-                cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
-                # draw cross air
-                cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
-                cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
-                cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
 
-                turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
+            # if len(contours) != 0:
+            #     rect = max(contours, key=cv2.contourArea)
+            #
+            #     M = cv2.moments(rect)
+
+            # d = cv2.absdiff(frame, frame2)
+            #
+            # grey = cv2.cvtColor(d, cv2.COLOR_BGR2GRAY)
+            #
+            # blur = cv2.GaussianBlur(grey, (5, 5), 0)
+            #
+            # ret, th = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+            #
+            # kernel = np.ones((3, 3), np.uint8)
+            # dilated = cv2.dilate(th, kernel, iterations=10)
+            #
+            # eroded = cv2.erode(dilated, kernel, iterations=10)
+            #
+            # img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            #
+            # if len(contours) != 0:
+            #     rect = max(contours, key=cv2.contourArea)
+            #
+            #     M = cv2.moments(rect)
+            #
+            #     # centre of mass
+            #     try:
+            #         cx = int(M['m10'] / M['m00'])
+            #         cy = int(M['m01'] / M['m00'])
+            #     except:
+            #         cx = int(w / 2)
+            #         cy = int(h / 2)
+            #
+            #     print(str(cx) + " " + str(cy))
+            #     # draw rectangle
+            #     overlay = displayframe.copy()
+            #     x, y, w, h = cv2.boundingRect(rect)
+            #     cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
+            #     opacity = 0.5
+            #     cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
+            #     # draw cross air
+            #     cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
+            #     cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
+            #     cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
+            #
+            #     turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
                 # TODO all of the motion things
 
 # display----------------------------------------------------
         if display == 1:
-            cv2.imshow("display", displayframe)
+            cv2.imshow("display", displayframe) #creates display window
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
@@ -290,8 +340,8 @@ def main(display):
             KeyboardHandler.WaitKey().thread.start()
 
 
-        frame = frame2
-        frame2 = cam.get_frame()
+        # frame = frame2
+        # frame2 = cam.get_frame()
 
 
 
