@@ -167,34 +167,39 @@ def main(display):
             # make all values above threshold white and others black
             cv2.accumulateWeighted(blur, avg, fading_factor)
             frame_delta = cv2.absdiff(blur, cv2.convertScaleAbs(avg))
-            thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)
+            thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
 
             # dilate threshold to make a blob and get the contours
             kernel = np.ones((3, 3), np.uint8)
             dilated = cv2.dilate(thresh, kernel, iterations=10)
-            contours = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
-
-            # loop over contours
-            for c in contours:
-                # if contour is too small, ignore
-                if cv2.contourArea(c) < min_area:
-                    continue
+            img, contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
 
             if len(contours) != 0:
                 # get max bounding box
                 rect = max(contours, key=cv2.contourArea)
-                if cv2.minAreaRect(rect) < min_area:
-                    continue
                 # get center of area
                 M = cv2.moments(rect)
-                cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
+                try:
+                    cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
+                except:
+                    cx, cy = int(cam.w / 2), int(cam.h / 2)
+
+                print(str(cx) + " " + str(cy))
+                # draw rectangle
+                overlay = displayframe.copy()
+                x, y, w, h = cv2.boundingRect(rect)
+                cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
+                opacity = 0.5
+                cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
+                # draw cross air
+                cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
+                cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
+                cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
+
+                turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
 
 
-            # if len(contours) != 0:
-            #     rect = max(contours, key=cv2.contourArea)
-            #
-            #     M = cv2.moments(rect)
 
             # d = cv2.absdiff(frame, frame2)
             #
