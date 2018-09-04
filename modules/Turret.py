@@ -30,7 +30,7 @@ class Controller(threading.Thread):
         # Behaviour variables
         # TODO add behaviour and smoothness factors
         self.active_smoothing = True
-        self.smoothing_factor = 0.9 # larger is smoother up to 1
+        self.smoothing_factor = 0.8 # larger is smoother up to 1, but also slower...
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
@@ -54,14 +54,6 @@ class Controller(threading.Thread):
         self.yPulse = 0.0
         self.cfg = cfg
         # test variables
-        self.fps = 1.5 #frame per seconds  *** movement is wild if set too high ***
-        self.stepsleep = 0.05 #time per step (smoothness)
-        self.deltaxy = [0.0, 0.0]  # current move
-        self.deltaxylast = [0.0, 0.0]  # prior move
-        self.stepxy = [0.0, 0.0]  # xy per step
-        self.steps = (1.0 / self.fps) / self.stepsleep  # steps per frame
-        self.stepcounter = 0  # motion step counter
-        self.firesensitivity = .02  # how trigger happy
 
         threading.Thread.__init__(self)
 
@@ -103,21 +95,11 @@ class Controller(threading.Thread):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
-        self.send_target([-self.xy[0]+self.center[0], -self.xy[1]+self.center[1]], self.xy)
+        self.send_target(self.center, self.xy)
 
     def send_target(self, newXYpulse, curXYpulse):
         print('Sending target')
-        # TODO start stepping to new position from current pos
-        # self.deltaxylast = self.deltaxy[:]
-        # # subtract distance since capture
-        # self.deltaxy[0] = newXY[0] - (self.xy[0] - curXY[0])
-        # self.deltaxy[1] = newXY[1] - (self.xy[1] - curXY[1])
-        # # stay on newest delta
-        # if self.stepcounter > 0:
-        #     if abs(self.deltaxy[0]) < abs(self.deltaxylast[0]):
-        #         self.stepxy[0] = 0.0
-        #     if abs(self.deltaxy[1]) < abs(self.deltaxylast[1]):
-        #         self.stepxy[1] = 0.0
+        # gives a new position to move towards
         self.oldxy = curXYpulse
         self.possiblexy = newXYpulse
 

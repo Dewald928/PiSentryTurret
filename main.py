@@ -108,21 +108,19 @@ def main(display):
 
     # Wait a few seconds
     print('Starting up')
-    i = 0
-    while i < 5:  # allow 5sec for startup
-        i += 1
-        sleep(0.1)
+    sleep(2.5)
 
 
 
     #display
     if display == 1:
         cv2.namedWindow('display')
-        cv2.setMouseCallback('display', on_click, 0)
+        if tracker.mode == 0:
+            cv2.setMouseCallback('display', on_click, 0)
 
 
 
-
+    print('Ready!')
     # ======================================
     # ------------- LOOP -------------------
     # ======================================
@@ -139,11 +137,8 @@ def main(display):
 
 # manual mode--------------------------------------------------
         if tracker.mode == 0:
-            sleep(0.05)
+            sleep(0.01)
             draw_crossair()
-            # if KeyboardHandler.keypressed.isSet():
-
-
 
 
 
@@ -201,7 +196,6 @@ def main(display):
             key = cv2.waitKey(1)
             # transfer char from opencv window
             if key > 0:
-                print(key)
                 KeyboardHandler.keypressed.set()
                 KeyboardHandler.key = chr(key)
 
