@@ -76,7 +76,7 @@ class FiringThread(threading.Thread):
 
 
 
-
+# ===========================================================================================================
 def main(display):
     global cam, turret, ix,iy, displayframe
     # =======================
@@ -123,6 +123,7 @@ def main(display):
     frame = cam.get_frame()
     frame2 = cam.get_frame()
     avg = None
+    # fgbg = cv2.createBackgroundSubtractorMOG2() # EXPERIMENTAL background algorithms
     print('Ready!')
     # ======================================
     # ------------- LOOP -------------------
@@ -152,7 +153,7 @@ def main(display):
 
 
 
-# automatic mode 1-----------------------------------------------
+# automatic mode 1 (simple background subtraction)-----------------------------------------------
         if tracker.mode == 1:
             # convert to grayscale and apply blur
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -201,7 +202,7 @@ def main(display):
 
                 # cv2.imshow("display", img)
 
-
+# Auto mode 2 (Recurrent frames)---------------------------------------------------------
 
         if tracker.mode == 2:
             d = cv2.absdiff(frame, frame2)
@@ -230,7 +231,7 @@ def main(display):
 
             if len(contours) != 0:
                 area = cv2.contourArea(max(contours, key=cv2.contourArea))
-                if area < min_area:
+                if area > min_area:
                     rect = max(contours, key=cv2.contourArea)
 
                     M = cv2.moments(rect)
@@ -258,6 +259,41 @@ def main(display):
                 # TODO all of the motion things
             frame = frame2
             frame2 = cam.get_frame()
+
+
+# Auto Mode 3 (developed algorithms, slower) -------------------------------------------------------------
+        if tracker.mode == 3:
+            fgmask = fgbg.apply(frame)
+
+            thresh = cv2.dilate(fgmask, None, iterations=5)
+            img, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            if len(contours) != 0:
+                area = cv2.contourArea(max(contours, key=cv2.contourArea))
+                if area > min_area:
+                    rect = max(contours, key=cv2.contourArea)
+
+                    M = cv2.moments(rect)
+
+                    # centre of mass
+                    try:
+                        cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
+                    except:
+                        cx, cy = int(w / 2), int(h / 2)
+
+                    print(str(cx) + " " + str(cy))
+                    # draw rectangle
+                    overlay = displayframe.copy()
+                    x, y, w, h = cv2.boundingRect(rect)
+                    cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
+                    opacity = 0.5
+                    cv2.addWeighted(overlay, opacity, displayframe, 1 - opacity, 0, displayframe)
+                    # draw cross air
+                    cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
+                    cv2.line(displayframe, (0, cy), (cam.w, cy), (0, 0, 255), 1)
+                    cv2.line(displayframe, (cx, 0), (cx, cam.h), (0, 0, 255), 1)
+
+                    turret.send_target(turret.coord_to_pulse((cx, cy)), currentXY)
 
 # display----------------------------------------------------
         if display == 1:
@@ -317,6 +353,12 @@ def main(display):
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "2": # automatic mode
                 print('Automatic Mode 2 Selected')
+                if display == 1:
+                    cv2.setMouseCallback('display', lambda *args : None)
+                turret.armed = False
+                tracker.mode = int(KeyboardHandler.key)
+            if KeyboardHandler.key == "3": # automatic mode
+                print('[WARNING: Experimental] Automatic Mode 3 Selected')
                 if display == 1:
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False

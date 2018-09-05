@@ -95,7 +95,7 @@ class Controller(threading.Thread):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
-        self.send_target(self.center, self.xy)
+        self.send_target([-self.xy[0]+self.center[0], -self.xy[1]+self.center[1]], self.xy)
 
     def send_target(self, newXYpulse, curXYpulse):
         print('Sending target')
