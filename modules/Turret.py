@@ -71,6 +71,11 @@ class Controller(threading.Thread):
         self.xMax = 1
         self.yMin = -1
         self.yMax = 1
+        self.cfg['controller']['xMin'] = -1
+        self.cfg['controller']['xMax'] =  1
+        self.cfg['controller']['yMin'] = -1
+        self.cfg['controller']['yMax'] =  1
+        self.cfg.write()
         self.xRatio = self.camw / (self.xMax - self.xMin)
         self.yRatio = self.camh / (self.yMax - self.yMin)
         print('Calabrations are Reset')
@@ -95,7 +100,9 @@ class Controller(threading.Thread):
         # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
-        self.send_target([-self.xy[0]+self.center[0], -self.xy[1]+self.center[1]], self.xy)
+        self.center[0] = (self.xMax+self.xMin)/2
+        self.center[1] = (self.yMax+self.yMin)/2
+        self.send_target(self.center, self.xy)
 
     def send_target(self, newXYpulse, curXYpulse):
         print('Sending target')
