@@ -84,9 +84,9 @@ def main(display):
     # =======================
 
     # Create camera object
-    cam = Camera.Cam(cfg)
-    fading_factor = 0.5 # TODO put in config
-    min_area = 500 # TODO in config
+    cam = Camera.Cam(cfg) #TODO error if no camera found
+    fading_factor = float(cfg['controller']['fading_factor'])
+    min_area = int(cfg['controller']['min_area'])
     ix = int(cam.w/2)
     iy = int(cam.h/2)
 
@@ -137,6 +137,7 @@ def main(display):
 
         # break if frame couldn't be captures
         if frame is None:
+            print("[WARNING] First frame couldn't be captured, restart program")
             break
 
         if display == 1:
@@ -171,9 +172,8 @@ def main(display):
             thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
 
             # dilate threshold to make a blob and get the contours
-            kernel = np.ones((3, 3), np.uint8)
-            dilated = cv2.dilate(thresh, kernel, iterations=5)
-            img, contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
+            dilated = cv2.dilate(thresh, None, iterations=10)
+            img, contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
 
             if len(contours) != 0:
                 # get max bounding box
@@ -216,7 +216,7 @@ def main(display):
                 avg = blur.copy().astype("float")
                 continue
 
-            cv2.accumulateWeighted(blur, avg, 0.5)
+            cv2.accumulateWeighted(blur, avg, 0.1)
             frameDelta = cv2.absdiff(blur, cv2.convertScaleAbs(avg))
 
             th = cv2.threshold(frameDelta, 20, 255, cv2.THRESH_BINARY)[1]
@@ -229,29 +229,31 @@ def main(display):
             img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
             if len(contours) != 0:
-                rect = max(contours, key=cv2.contourArea)
+                area = cv2.contourArea(max(contours, key=cv2.contourArea))
+                if area < min_area:
+                    rect = max(contours, key=cv2.contourArea)
 
-                M = cv2.moments(rect)
+                    M = cv2.moments(rect)
 
-                # centre of mass
-                try:
-                    cx, cy = int(M['m10'] / M['m00']),int(M['m01'] / M['m00'])
-                except:
-                    cx, cy = int(w / 2), int(h / 2)
+                    # centre of mass
+                    try:
+                        cx, cy = int(M['m10'] / M['m00']),int(M['m01'] / M['m00'])
+                    except:
+                        cx, cy = int(w / 2), int(h / 2)
 
-                print(str(cx) + " " + str(cy))
-                # draw rectangle
-                overlay = displayframe.copy()
-                x, y, w, h = cv2.boundingRect(rect)
-                cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
-                opacity = 0.5
-                cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
-                # draw cross air
-                cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
-                cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
-                cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
+                    print(str(cx) + " " + str(cy))
+                    # draw rectangle
+                    overlay = displayframe.copy()
+                    x, y, w, h = cv2.boundingRect(rect)
+                    cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
+                    opacity = 0.5
+                    cv2.addWeighted(overlay, opacity, displayframe, 1-opacity, 0 , displayframe)
+                    # draw cross air
+                    cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
+                    cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
+                    cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
 
-                turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
+                    turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
                 # TODO all of the motion things
             frame = frame2
@@ -273,18 +275,26 @@ def main(display):
         if KeyboardHandler.keypressed.isSet():
             if KeyboardHandler.key == "4": # lower limit x
                 turret.xMin = turret.xy[0]
+                cfg['controller']['xMin'] = turret.xMin
+                cfg.write()
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Minumimum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
             if KeyboardHandler.key == "6": # upper limit x
                 turret.xMax = turret.xy[0]
+                cfg['controller']['xMax'] = turret.xMax
+                cfg.write()
                 turret.xRatio = cam.w/(turret.xMax-turret.xMin)
                 print('Maximum x limit set to', int(((turret.xy[0]/2)*180) + 90), 'degrees', turret.xy[0])
             if KeyboardHandler.key == "5": # lower y limit
                 turret.yMin = turret.xy[1]
+                cfg['controller']['yMin'] = turret.yMin
+                cfg.write()
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Minumimum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
             if KeyboardHandler.key == "8": # upper x limit
                 turret.yMax = turret.xy[1]
+                cfg['controller']['yMax'] = turret.yMax
+                cfg.write()
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
             if KeyboardHandler.key == "r": # reset calibration settings

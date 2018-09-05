@@ -30,7 +30,7 @@ class Controller(threading.Thread):
         # Behaviour variables
         # TODO add behaviour and smoothness factors
         self.active_smoothing = True
-        self.smoothing_factor = 0.7 # larger is smoother up to 1, but also slower...
+        self.smoothing_factor = float(cfg['turret']['smoothing_factor']) # larger is smoother up to 1, but also slower...
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
@@ -67,10 +67,10 @@ class Controller(threading.Thread):
         self.firing = True
 
     def reset_calibration(self):
-        self.xMin = float(self.cfg['controller']['xMin'])
-        self.xMax = float(self.cfg['controller']['xMax'])
-        self.yMin = float(self.cfg['controller']['yMin'])
-        self.yMax = float(self.cfg['controller']['yMax'])
+        self.xMin = -1
+        self.xMax = 1
+        self.yMin = -1
+        self.yMax = 1
         self.xRatio = self.camw / (self.xMax - self.xMin)
         self.yRatio = self.camh / (self.yMax - self.yMin)
         print('Calabrations are Reset')
@@ -120,18 +120,6 @@ class Controller(threading.Thread):
             # TODO Step each iteration
             # TODO anticipation
             # TODO Active smoothing
-            # sleep(self.stepsleep)
-            # if self.stepcounter > 0:  # stepping to target
-            #     self.xy[0] += self.stepxy[0]
-            #     self.driver.move(self.servoPan, self.xy[0])
-            #     self.xy[1] += self.stepxy[1]
-            #     self.driver.move(self.servoTilt, self.xy[1])
-            #     self.stepcounter -= 1
-            # else:  # set next target
-            #     self.stepxy[0] = self.deltaxy[0] / self.steps
-            #     self.stepxy[1] = self.deltaxy[1] / self.steps
-            #     self.deltaxy = [0.0, 0.0]
-            #     self.stepcounter = self.steps
 
             sleep(0.01)
             if self.active_smoothing:
