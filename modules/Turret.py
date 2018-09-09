@@ -67,6 +67,13 @@ class Controller(threading.Thread):
         self.firing = True
 
     def reset_calibration(self):
+        '''
+        Test limits
+        xmin = 33 degrees
+        xmax = 138 deg
+        ymin = 82deg
+        ymax = 44 degs
+        '''
         self.xMin = -1
         self.xMax = 1
         self.yMin = -1
@@ -105,7 +112,7 @@ class Controller(threading.Thread):
         self.send_target(self.center, self.xy)
 
     def send_target(self, newXYpulse, curXYpulse):
-        print('Sending target')
+        # print('Sending target')
         # gives a new position to move towards
         self.oldxy = curXYpulse
         self.possiblexy = newXYpulse

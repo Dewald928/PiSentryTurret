@@ -21,6 +21,7 @@ import modules.Camera as Camera
 import modules.Turret as Turret
 import modules.KeyboardHandler as KeyboardHandler
 import modules.Tracker as Tracker
+from timeit import default_timer as timer #for checking processing speeds
 
 
 # load config
@@ -73,6 +74,8 @@ class FiringThread(threading.Thread):
                 turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
                 sleep(0.2)
                 turret.firing = False
+            else:
+                sleep(0.01) #TODO has lag in unarmed state
 
 
 
@@ -129,7 +132,7 @@ def main(display):
     # ------------- LOOP -------------------
     # ======================================
     while True:
-
+        start = timer()
         #current pulse position
         currentXY = turret.xy
 
@@ -138,7 +141,7 @@ def main(display):
 
         # break if frame couldn't be captures
         if frame is None:
-            print("[WARNING] First frame couldn't be captured, restart program")
+            print("[WARNING] First frame couldn't be captured, check webcam")
             break
 
         if display == 1:
@@ -173,7 +176,7 @@ def main(display):
             thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
 
             # dilate threshold to make a blob and get the contours
-            dilated = cv2.dilate(thresh, None, iterations=10)
+            dilated = cv2.dilate(thresh, None, iterations=2)
             img, contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # TODO test other RETR
 
             if len(contours) != 0:
@@ -186,7 +189,7 @@ def main(display):
                 except:
                     cx, cy = int(cam.w / 2), int(cam.h / 2)
 
-                print(str(cx) + " " + str(cy))
+                # print(str(cx) + " " + str(cy))
                 # draw rectangle
                 overlay = displayframe.copy()
                 x, y, w, h = cv2.boundingRect(rect)
@@ -199,8 +202,6 @@ def main(display):
                 cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
 
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
-
-                # cv2.imshow("display", img)
 
 # Auto mode 2 (Recurrent frames)---------------------------------------------------------
 
@@ -217,15 +218,15 @@ def main(display):
                 avg = blur.copy().astype("float")
                 continue
 
-            cv2.accumulateWeighted(blur, avg, 0.1)
+            cv2.accumulateWeighted(blur, avg, fading_factor)
             frameDelta = cv2.absdiff(blur, cv2.convertScaleAbs(avg))
 
             th = cv2.threshold(frameDelta, 20, 255, cv2.THRESH_BINARY)[1]
 
             kernel = np.ones((3, 3), np.uint8)
-            dilated = cv2.dilate(th, kernel, iterations=10)
+            dilated = cv2.dilate(th, kernel, iterations=2)
 
-            eroded = cv2.erode(dilated, kernel, iterations=10)
+            eroded = cv2.erode(dilated, kernel, iterations=2)
 
             img, contours, _ = cv2.findContours(eroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -263,37 +264,8 @@ def main(display):
 
 # Auto Mode 3 (developed algorithms, slower) -------------------------------------------------------------
         if tracker.mode == 3:
-            fgmask = fgbg.apply(frame)
+            print('[WARNING]')
 
-            thresh = cv2.dilate(fgmask, None, iterations=5)
-            img, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-            if len(contours) != 0:
-                area = cv2.contourArea(max(contours, key=cv2.contourArea))
-                if area > min_area:
-                    rect = max(contours, key=cv2.contourArea)
-
-                    M = cv2.moments(rect)
-
-                    # centre of mass
-                    try:
-                        cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
-                    except:
-                        cx, cy = int(w / 2), int(h / 2)
-
-                    print(str(cx) + " " + str(cy))
-                    # draw rectangle
-                    overlay = displayframe.copy()
-                    x, y, w, h = cv2.boundingRect(rect)
-                    cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), -1)
-                    opacity = 0.5
-                    cv2.addWeighted(overlay, opacity, displayframe, 1 - opacity, 0, displayframe)
-                    # draw cross air
-                    cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
-                    cv2.line(displayframe, (0, cy), (cam.w, cy), (0, 0, 255), 1)
-                    cv2.line(displayframe, (cx, 0), (cx, cam.h), (0, 0, 255), 1)
-
-                    turret.send_target(turret.coord_to_pulse((cx, cy)), currentXY)
 
 # display----------------------------------------------------
         if display == 1:
@@ -413,6 +385,8 @@ def main(display):
 
             # reset key polling
             KeyboardHandler.WaitKey().thread.start()
+            end = timer()
+            print(end-start)
 
 
 
