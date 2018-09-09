@@ -22,7 +22,9 @@ import modules.Turret as Turret
 import modules.KeyboardHandler as KeyboardHandler
 import modules.Tracker as Tracker
 from timeit import default_timer as timer #for checking processing speeds
-
+from imutils.video import WebcamVideoStream
+from imutils.video import FPS
+import imutils
 
 # load config
 from configobj import ConfigObj  # cool read and write config file
@@ -61,7 +63,7 @@ def draw_crossair():
 
 class FiringThread(threading.Thread):
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self,name='FiringThread')
         self.daemon = True
 
     def run(self):
@@ -88,6 +90,8 @@ def main(display):
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
+    cam.start()
+    # vs = WebcamVideoStream(src=0).start()
     fading_factor = float(cfg['controller']['fading_factor'])
     min_area = int(cfg['controller']['min_area'])
     ix = int(cam.w/2)
@@ -110,7 +114,7 @@ def main(display):
 
 
     # Wait a few seconds
-    print('Starting up')
+    print('[INFO] Starting...')
     sleep(2.5)
 
 
@@ -123,11 +127,11 @@ def main(display):
 
 
     #initialize the first and average frame
-    frame = cam.get_frame()
-    frame2 = cam.get_frame()
+    frame = cam.read()
+    frame2 = cam.read()
     avg = None
     # fgbg = cv2.createBackgroundSubtractorMOG2() # EXPERIMENTAL background algorithms
-    print('Ready!')
+    print('[INFO] Ready!')
     # ======================================
     # ------------- LOOP -------------------
     # ======================================
@@ -137,11 +141,11 @@ def main(display):
         currentXY = turret.xy
 
         #grab current frame
-        frame = cam.get_frame()
-
+        frame = cam.read()
+        frame = imutils.resize(frame, width=cam.w)
         # break if frame couldn't be captures
         if frame is None:
-            print("[WARNING] First frame couldn't be captured, check webcam")
+            print("[ERROR] First frame couldn't be captured, check webcam")
             break
 
         if display == 1:
@@ -200,7 +204,7 @@ def main(display):
                 cv2.circle(displayframe, (cx, cy), 5, (0, 0, 255), 1)
                 cv2.line(displayframe, (0,cy), (cam.w,cy), (0,0,255), 1)
                 cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
-
+                #send target coordinates
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
 
 # Auto mode 2 (Recurrent frames)---------------------------------------------------------
@@ -210,7 +214,7 @@ def main(display):
 
             grey = cv2.cvtColor(d, cv2.COLOR_BGR2GRAY)
 
-            blur = cv2.GaussianBlur(grey, (5, 5), 0)
+            blur = cv2.GaussianBlur(grey, (21, 21), 0)
 
             # if the average frame is None, initialize it
             if avg is None:
@@ -259,7 +263,7 @@ def main(display):
 
                 # TODO all of the motion things
             frame = frame2
-            frame2 = cam.get_frame()
+            frame2 = cam.read()
 
 
 # Auto Mode 3 (developed algorithms, slower) -------------------------------------------------------------
@@ -335,7 +339,7 @@ def main(display):
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
-            if KeyboardHandler.key == " ": # spacebar arms and disarms system
+            if KeyboardHandler.key == "f": # f arms and disarms system
                 turret.armed = not turret.armed
                 if turret.armed == True:
                     print('System Armed')
@@ -369,7 +373,7 @@ def main(display):
                     if ix > cam.w :
                         ix = cam.w
                         turret.send_target(turret.coord_to_pulse((ix, iy)), currentXY)
-                if KeyboardHandler.key == "f":  # f for fire!, because enter isn't everything :P
+                if KeyboardHandler.key == " ":  # space for fire, because f is oopsie
                     turret.fire()
 
 # Smoothness and Sesitivity--------------------------------------
@@ -379,22 +383,20 @@ def main(display):
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
                 turret.quit()
-                cam.quit()
+                cam.stop()
                 cv2.destroyAllWindows()
                 break
 
             # reset key polling
             KeyboardHandler.WaitKey().thread.start()
             end = timer()
-            print(end-start)
+            # print(end-start)
 
 
 
-
-
-
+    #cleanly exists program
     cv2.destroyAllWindows()
-    cam.quit()
+    cam.stop()
     turret.quit()
 
 
@@ -403,7 +405,7 @@ if __name__ == "__main__":
     try:
         display = int(sys.argv[1])
     except:
-        print('No display. argv: 0 = no display, 1 = display (needed for calibration)')
+        print('No display mode active. argv: 0 = no display, 1 = display')
     main(display)
 
 

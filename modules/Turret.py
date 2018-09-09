@@ -55,7 +55,7 @@ class Controller(threading.Thread):
         self.cfg = cfg
         # test variables
 
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name='TurretThread')
 
     def coord_to_pulse(self,coord):
         self.xPulse = (float(coord[0])/self.xRatio)+self.xMin
