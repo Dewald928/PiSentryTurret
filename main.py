@@ -142,7 +142,7 @@ def main(display):
 
         #grab current frame
         frame = cam.read()
-        frame = imutils.resize(frame, width=cam.w)
+        # frame = imutils.resize(frame, width=cam.w)
         # break if frame couldn't be captures
         if frame is None:
             print("[ERROR] First frame couldn't be captured, check webcam")

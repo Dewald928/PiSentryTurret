@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import threading
+import numpy as np
 from time import sleep
 from modules.drivers.ServoDriverController import ServoDriver
 
@@ -27,8 +28,13 @@ class Controller(threading.Thread):
         self.triggerFirePos = float(cfg['turret']['triggerFirePos'])
         # Driver
         self.driver = ServoDriver(cfg)
+        # Anticipation
+        self.num_pts = 10 #number of previous pulse positions
+        self.ant_sensitivity = 10 # sensitivity of anticipation
+        self.pre_possible_xy = [0] * self.num_pts
+        self.propX = 0.67 # degree of anticipation #TODO config file
+        self.propY = 0.11 # degree of y anticipation #TODO tweak via keyboard
         # Behaviour variables
-        # TODO add behaviour and smoothness factors
         self.active_smoothing = True
         self.smoothing_factor = float(cfg['turret']['smoothing_factor']) # larger is smoother up to 1, but also slower...
         # variables
@@ -111,9 +117,18 @@ class Controller(threading.Thread):
         self.center[1] = (self.yMax+self.yMin)/2
         self.send_target(self.center, self.xy)
 
+    def anticipation(self, newXYpulse):
+        self.pre_possible_xy[0] = newXYpulse
+        print(self.pre_possible_xy)
+
+
     def send_target(self, newXYpulse, curXYpulse):
         # print('Sending target')
         # gives a new position to move towards
+
+        # TODO anticipation
+        self.anticipation(newXYpulse)
+
         self.oldxy = curXYpulse
         self.possiblexy = newXYpulse
 
