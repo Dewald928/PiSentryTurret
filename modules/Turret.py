@@ -33,12 +33,12 @@ class Controller(threading.Thread):
         # Anticipation
         self.anticipation_active = True
         self.num_pts = 10 #number of previous pulse positions
-        self.ant_sens = 2 # sensitivity of anticipation
+        self.ant_sens = 10 # sensitivity of anticipation
         self.pre_possible_x = [0.0] * (self.num_pts + 1)
         self.pre_possible_y = [0.0] * (self.num_pts + 1)
         self.distX = [0.0] * (self.num_pts - 1)
         self.distY = [0.0] * (self.num_pts - 1)
-        self.propXY = [2,0.11] # degree of anticipation #TODO config file, adjust via keyboard
+        self.propXY = [0.5,0.5] # degree of anticipation #TODO config file, adjust via keyboard
         self.antXY = [0,0] #anticipation value
         self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
         self.accY = [0.0] * (self.num_pts - 1)
@@ -146,8 +146,12 @@ class Controller(threading.Thread):
         for i in range(self.num_pts -2):
             if abs(self.pre_possible_x[i] - self.pre_possible_x[i + 1]) < self.camw / self.ant_sens:
                 self.distX[i] = self.pre_possible_x[i] - self.pre_possible_x[i + 1]
+            else:
+                self.distX[i] = 0
             if abs(self.pre_possible_y[i] - self.pre_possible_y[i + 1]) < self.camh / self.ant_sens:
                 self.distY[i] = self.pre_possible_y[i] - self.pre_possible_y[i + 1]
+            else:
+                self.distY[i] = 0
 
         # Addition of speed and acceleration
         # Terms are weighed to the sensitivity
@@ -165,9 +169,9 @@ class Controller(threading.Thread):
         for i in range(self.num_pts, 0, -1):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
-
-        self.possiblexy[0] = self.possiblexy[0] + self.antXY[0]
-        self.possiblexy[1] = self.possiblexy[1] + self.antXY[1]
+        #TODO can't be larger than 1
+        self.possiblexy[0] = newXYpulse[0] + self.antXY[0]
+        self.possiblexy[1] = newXYpulse[1] + self.antXY[1]
 
 
 
