@@ -206,6 +206,7 @@ def main(display):
                 cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
                 #send target coordinates
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
+                #TODO crossair with anticipation
 
 # Auto mode 2 (Recurrent frames)---------------------------------------------------------
 

@@ -33,12 +33,12 @@ class Controller(threading.Thread):
         # Anticipation
         self.anticipation_active = True
         self.num_pts = 10 #number of previous pulse positions
-        self.ant_sens = 10 # sensitivity of anticipation
+        self.ant_sens = 2 # sensitivity of anticipation
         self.pre_possible_x = [0.0] * (self.num_pts + 1)
         self.pre_possible_y = [0.0] * (self.num_pts + 1)
         self.distX = [0.0] * (self.num_pts - 1)
         self.distY = [0.0] * (self.num_pts - 1)
-        self.propXY = [0.67,0.11] # degree of anticipation #TODO config file, adjust via keyboard
+        self.propXY = [2,0.11] # degree of anticipation #TODO config file, adjust via keyboard
         self.antXY = [0,0] #anticipation value
         self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
         self.accY = [0.0] * (self.num_pts - 1)
@@ -134,19 +134,20 @@ class Controller(threading.Thread):
 
         #Acceleration between previous possible xy
         for i in range(self.num_pts - 2):
-            # TODO check abs
-            if (abs(self.pre_possible_x[i] - self.pre_possible_x[i+1]) < self.camw/self.ant_sens &&
-                abs(self.pre_possible_x[i+1] - self.pre_possible_x[i+2] < self.camw/self.ant_sens)):
+            if ((abs(self.pre_possible_x[i] - self.pre_possible_x[i+1]) < self.camw/self.ant_sens) and
+                    (abs(self.pre_possible_x[i+1] - self.pre_possible_x[i+2]) < self.camw/self.ant_sens)):
                 self.accX[i] = (self.pre_possible_x[i] - self.pre_possible_x[i + 1]) - (self.pre_possible_x[i + 1] - self.pre_possible_x[i + 2])
 
-
-            self.accY[i] = (self.pre_possible_y[i] - self.pre_possible_y[i + 1]) - (self.pre_possible_y[i + 1] - self.pre_possible_y[i + 2])
+            if ((abs(self.pre_possible_y[i] - self.pre_possible_y[i + 1]) < self.camh / self.ant_sens) and
+                    (abs(self.pre_possible_y[i + 1] - self.pre_possible_y[i + 2]) < self.camh / self.ant_sens)):
+                self.accY[i] = (self.pre_possible_y[i] - self.pre_possible_y[i + 1]) - (self.pre_possible_y[i + 1] - self.pre_possible_y[i + 2])
 
         # Distance between previous possible xy/ which is also velocity?? discrete time systems are weird
         for i in range(self.num_pts -2):
-            #TODO if sensitivity
-            self.distX[i] = self.pre_possible_x[i] - self.pre_possible_x[i + 1]
-            self.distY[i] = self.pre_possible_y[i] - self.pre_possible_y[i + 1]
+            if abs(self.pre_possible_x[i] - self.pre_possible_x[i + 1]) < self.camw / self.ant_sens:
+                self.distX[i] = self.pre_possible_x[i] - self.pre_possible_x[i + 1]
+            if abs(self.pre_possible_y[i] - self.pre_possible_y[i + 1]) < self.camh / self.ant_sens:
+                self.distY[i] = self.pre_possible_y[i] - self.pre_possible_y[i + 1]
 
         # Addition of speed and acceleration
         # Terms are weighed to the sensitivity
@@ -161,7 +162,7 @@ class Controller(threading.Thread):
         self.antXY[1] = self.propXY[1] * self.antXY[1]
 
         # Move all the previous up to make space for new 0 position
-        for i in range(self.num_pts, 1, -1):
+        for i in range(self.num_pts, 0, -1):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
 
