@@ -26,17 +26,27 @@ class Controller(threading.Thread):
         self.servoTrigger = int(cfg['turret']['triggerchannel'])
         self.triggerHomePos = float(cfg['turret']['triggerHomePos'])
         self.triggerFirePos = float(cfg['turret']['triggerFirePos'])
+
         # Driver
         self.driver = ServoDriver(cfg)
+
         # Anticipation
+        self.anticipation_active = True
         self.num_pts = 10 #number of previous pulse positions
-        self.ant_sensitivity = 10 # sensitivity of anticipation
-        self.pre_possible_xy = [0] * self.num_pts
-        self.propX = 0.67 # degree of anticipation #TODO config file
-        self.propY = 0.11 # degree of y anticipation #TODO tweak via keyboard
+        self.ant_sens = 10 # sensitivity of anticipation
+        self.pre_possible_x = [0.0] * (self.num_pts + 1)
+        self.pre_possible_y = [0.0] * (self.num_pts + 1)
+        self.distX = [0.0] * (self.num_pts - 1)
+        self.distY = [0.0] * (self.num_pts - 1)
+        self.propXY = [0.67,0.11] # degree of anticipation #TODO config file, adjust via keyboard
+        self.antXY = [0,0] #anticipation value
+        self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
+        self.accY = [0.0] * (self.num_pts - 1)
+
         # Behaviour variables
         self.active_smoothing = True
         self.smoothing_factor = float(cfg['turret']['smoothing_factor']) # larger is smoother up to 1, but also slower...
+
         # variables
         self.triggertimer = threading.Event()
         self.armed = False
@@ -110,7 +120,6 @@ class Controller(threading.Thread):
         print('Y flipped')
 
     def center_position(self):
-        # TODO returns turret  to middle of screen (0,0)
         print('Centering...')
         self.armed = False
         self.center[0] = (self.xMax+self.xMin)/2
@@ -118,8 +127,47 @@ class Controller(threading.Thread):
         self.send_target(self.center, self.xy)
 
     def anticipation(self, newXYpulse):
-        self.pre_possible_xy[0] = newXYpulse
-        print(self.pre_possible_xy)
+        # TODO check lengths
+
+        self.pre_possible_x[0] = newXYpulse[0] #new pulse placed in 0 position
+        self.pre_possible_y[0] = newXYpulse[1]
+
+        #Acceleration between previous possible xy
+        for i in range(self.num_pts - 2):
+            # TODO check abs
+            if (abs(self.pre_possible_x[i] - self.pre_possible_x[i+1]) < self.camw/self.ant_sens &&
+                abs(self.pre_possible_x[i+1] - self.pre_possible_x[i+2] < self.camw/self.ant_sens)):
+                self.accX[i] = (self.pre_possible_x[i] - self.pre_possible_x[i + 1]) - (self.pre_possible_x[i + 1] - self.pre_possible_x[i + 2])
+
+
+            self.accY[i] = (self.pre_possible_y[i] - self.pre_possible_y[i + 1]) - (self.pre_possible_y[i + 1] - self.pre_possible_y[i + 2])
+
+        # Distance between previous possible xy/ which is also velocity?? discrete time systems are weird
+        for i in range(self.num_pts -2):
+            #TODO if sensitivity
+            self.distX[i] = self.pre_possible_x[i] - self.pre_possible_x[i + 1]
+            self.distY[i] = self.pre_possible_y[i] - self.pre_possible_y[i + 1]
+
+        # Addition of speed and acceleration
+        # Terms are weighed to the sensitivity
+
+        self.antXY = [0,0]
+
+        for i in range(self.num_pts - 2):
+            self.antXY[0] = self.antXY[0] + self.distX[i] + self.accX[i]
+            self.antXY[1] = self.antXY[1] + self.distY[i] + self.accY[i]
+
+        self.antXY[0] = self.propXY[0] * self.antXY[0]
+        self.antXY[1] = self.propXY[1] * self.antXY[1]
+
+        # Move all the previous up to make space for new 0 position
+        for i in range(self.num_pts, 1, -1):
+            self.pre_possible_x[i] = self.pre_possible_x[i - 1]
+            self.pre_possible_y[i] = self.pre_possible_y[i - 1]
+
+        self.possiblexy[0] = self.possiblexy[0] + self.antXY[0]
+        self.possiblexy[1] = self.possiblexy[1] + self.antXY[1]
+
 
 
     def send_target(self, newXYpulse, curXYpulse):
@@ -127,10 +175,13 @@ class Controller(threading.Thread):
         # gives a new position to move towards
 
         # TODO anticipation
-        self.anticipation(newXYpulse)
+        if self.anticipation_active:
+            self.anticipation(newXYpulse)
+        else:
+            self.possiblexy = newXYpulse
 
-        self.oldxy = curXYpulse
-        self.possiblexy = newXYpulse
+        self.oldxy = curXYpulse # TODO what impact this has on anticipation?
+
 
         # fire if on target
         if self.armed and not self.triggertimer.isSet():
