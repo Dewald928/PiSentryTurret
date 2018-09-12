@@ -76,6 +76,7 @@ class FiringThread(threading.Thread):
                 turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
                 sleep(0.2)
                 turret.firing = False
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/blaster-firing.wav &")
             else:
                 sleep(0.01) #TODO has lag in unarmed state
 
@@ -324,6 +325,7 @@ def main(display):
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
                 print('Automatic Mode Selected')
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader02.wav &")
                 if display == 1:
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
@@ -383,6 +385,7 @@ def main(display):
 # Exit Program --------------------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-off.wav &")
                 turret.quit()
                 cam.stop()
                 cv2.destroyAllWindows()

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import threading
+import os
 import numpy as np
 from time import sleep
 from modules.drivers.ServoDriverController import ServoDriver
