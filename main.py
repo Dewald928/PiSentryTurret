@@ -320,6 +320,7 @@ def main(display):
 # Mode selection----------------------------------------
             if KeyboardHandler.key == "0": # manual mode
                 print('Manual Mode Selected')
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader03.wav &")
                 if display == 1:
                     cv2.setMouseCallback('display', on_click, 0)
                 tracker.mode = int(KeyboardHandler.key)
@@ -346,8 +347,10 @@ def main(display):
                 turret.armed = not turret.armed
                 if turret.armed == True:
                     print('System Armed')
+                    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-on.wav &")
                 else:
                     print('System Disarmed')
+                    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-off.wav &")
 
 #  Arrow key control(manual mode) --------------------------------
             if tracker.mode == 0:
@@ -385,7 +388,7 @@ def main(display):
 # Exit Program --------------------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-off.wav &")
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/force.wav &")
                 turret.quit()
                 cam.stop()
                 cv2.destroyAllWindows()
