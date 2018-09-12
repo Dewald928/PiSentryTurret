@@ -38,7 +38,7 @@ class Controller(threading.Thread):
         self.pre_possible_y = [0.0] * (self.num_pts + 1)
         self.distX = [0.0] * (self.num_pts - 1)
         self.distY = [0.0] * (self.num_pts - 1)
-        self.propXY = [0.5,0.5] # degree of anticipation #TODO config file, adjust via keyboard
+        self.propXY = [1.0,0.11] # degree of anticipation #TODO config file, adjust via keyboard
         self.antXY = [0,0] #anticipation value
         self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
         self.accY = [0.0] * (self.num_pts - 1)
@@ -122,6 +122,7 @@ class Controller(threading.Thread):
     def center_position(self):
         print('Centering...')
         self.armed = False
+        self.anticipation_active = False
         self.center[0] = (self.xMax+self.xMin)/2
         self.center[1] = (self.yMax+self.yMin)/2
         self.send_target(self.center, self.xy)
@@ -172,6 +173,7 @@ class Controller(threading.Thread):
         #TODO can't be larger than 1
         self.possiblexy[0] = newXYpulse[0] + self.antXY[0]
         self.possiblexy[1] = newXYpulse[1] + self.antXY[1]
+        print('Anticipated pulse:', self.possiblexy)
 
 
 

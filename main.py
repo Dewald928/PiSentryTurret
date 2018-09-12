@@ -87,10 +87,11 @@ def main(display):
     # =======================
     # ------ SETUP ----------
     # =======================
+    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader04.wav &")
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
-    cam.start()
+    # cam.start()
     # vs = WebcamVideoStream(src=0).start()
     fading_factor = float(cfg['controller']['fading_factor'])
     min_area = int(cfg['controller']['min_area'])
@@ -130,7 +131,6 @@ def main(display):
     frame = cam.read()
     frame2 = cam.read()
     avg = None
-    # fgbg = cv2.createBackgroundSubtractorMOG2() # EXPERIMENTAL background algorithms
     print('[INFO] Ready!')
     # ======================================
     # ------------- LOOP -------------------

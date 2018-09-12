@@ -43,11 +43,16 @@ class Cam :
             # otherwise, read the next frame from the stream
             (self.grabbed, self.frame) = self.cam.read()
 
-    def read(self):
-        # return the frame most recently read
-        return self.frame
+    # def read(self): #enable if threading
+    #     # return the frame most recently read
+    #     return self.frame
 
     def stop(self):
         # indicate that the thread should be stopped
         self.stopped = True
+        self.cam.release()
+
+    def read(self): # non threading camera read
+        _, self.frame = self.cam.read()
+        return self.frame
 
