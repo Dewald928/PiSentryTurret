@@ -39,7 +39,8 @@ class Controller(threading.Thread):
         self.pre_possible_y = [0.0] * (self.num_pts + 1)
         self.distX = [0.0] * (self.num_pts - 1)
         self.distY = [0.0] * (self.num_pts - 1)
-        self.propXY = [1.0,0.11] # degree of anticipation #TODO config file, adjust via keyboard
+        self.propX = float(cfg['controller']['propX'])
+        self.propY = float(cfg['controller']['propY'])
         self.antXY = [0,0] #anticipation value
         self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
         self.accY = [0.0] * (self.num_pts - 1)
@@ -164,8 +165,8 @@ class Controller(threading.Thread):
             self.antXY[0] = self.antXY[0] + self.distX[i] + self.accX[i]
             self.antXY[1] = self.antXY[1] + self.distY[i] + self.accY[i]
 
-        self.antXY[0] = self.propXY[0] * self.antXY[0]
-        self.antXY[1] = self.propXY[1] * self.antXY[1]
+        self.antXY[0] = self.propX * self.antXY[0]
+        self.antXY[1] = self.propY * self.antXY[1]
 
         # Move all the previous up to make space for new 0 position
         for i in range(self.num_pts, 0, -1):

@@ -22,9 +22,8 @@ import modules.Turret as Turret
 import modules.KeyboardHandler as KeyboardHandler
 import modules.Tracker as Tracker
 from timeit import default_timer as timer #for checking processing speeds
-from imutils.video import WebcamVideoStream
-from imutils.video import FPS
-import imutils
+
+
 
 # load config
 from configobj import ConfigObj  # cool read and write config file
@@ -71,12 +70,12 @@ class FiringThread(threading.Thread):
         while True:
             if turret.firing:
                 print('BANG!')
+                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/blaster-firing.wav &")
                 turret.driver.move(turret.servoTrigger, turret.triggerHomePos)
                 sleep(0.2) #tweak for firing speed
                 turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
                 sleep(0.2)
                 turret.firing = False
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/blaster-firing.wav &")
             else:
                 sleep(0.01) #TODO has lag in unarmed state
 
@@ -88,7 +87,7 @@ def main(display):
     # =======================
     # ------ SETUP ----------
     # =======================
-    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader04.wav &")
+    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader04.wav &") #use cmd: alsamixer for volume control
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
@@ -384,6 +383,15 @@ def main(display):
 
 # Smoothness and Sesitivity--------------------------------------
             # TODO Smoothness calibrations
+            if KeyboardHandler.key == "o":  # o/p - x anticipation value
+                turret.propX -= 0.1
+            if KeyboardHandler.key == "p":  # o/p - x anticipation value
+                turret.propX += 0.1
+            if KeyboardHandler.key == "k":  # k/l - y anticipation value
+                turret.propY -= 0.1
+            if KeyboardHandler.key == "l":  # k/l - y anticipation value
+                turret.propY += 0.1
+
 
 # Exit Program --------------------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
