@@ -91,8 +91,8 @@ def main(display):
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
-    # cam.start()
-    # vs = WebcamVideoStream(src=0).start()
+    # cam.start() #to make a camera thread, (causes bugs)
+    # vs = WebcamVideoStream(src=0).start() #if using imutils
     fading_factor = float(cfg['controller']['fading_factor'])
     min_area = int(cfg['controller']['min_area'])
     ix = int(cam.w/2)
@@ -385,12 +385,16 @@ def main(display):
             # TODO Smoothness calibrations
             if KeyboardHandler.key == "o":  # o/p - x anticipation value
                 turret.propX -= 0.1
+                print('X anticipation: ', turret.propX)
             if KeyboardHandler.key == "p":  # o/p - x anticipation value
                 turret.propX += 0.1
+                print('X anticipation: ', turret.propX)
             if KeyboardHandler.key == "k":  # k/l - y anticipation value
                 turret.propY -= 0.1
+                print('Y anticipation: ', turret.propY)
             if KeyboardHandler.key == "l":  # k/l - y anticipation value
                 turret.propY += 0.1
+                print('Y anticipation: ', turret.propY)
 
 
 # Exit Program --------------------------------------------------

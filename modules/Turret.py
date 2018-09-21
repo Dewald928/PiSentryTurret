@@ -78,7 +78,7 @@ class Controller(threading.Thread):
     def coord_to_pulse(self,coord):
         self.xPulse = (float(coord[0])/self.xRatio)+self.xMin
         self.yPulse = ((self.camh - float(coord[1]))/self.yRatio)+self.yMin
-        print('Coord to pulse:', self.xPulse, self.yPulse)
+        # print('Coord to pulse:', self.xPulse, self.yPulse)
         return (self.xPulse,self.yPulse)
 
     def fire(self): # pull trigger thread
@@ -168,7 +168,7 @@ class Controller(threading.Thread):
         self.antXY[0] = self.propX * self.antXY[0]
         self.antXY[1] = self.propY * self.antXY[1]
 
-        # Move all the previous up to make space for new 0 position
+        # Move all the previous up to make space for new value at 0 position
         for i in range(self.num_pts, 0, -1):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
@@ -180,10 +180,7 @@ class Controller(threading.Thread):
 
 
     def send_target(self, newXYpulse, curXYpulse):
-        # print('Sending target')
         # gives a new position to move towards
-
-        # TODO anticipation
         if self.anticipation_active:
             self.anticipation(newXYpulse)
         else:
@@ -205,10 +202,6 @@ class Controller(threading.Thread):
     def run(self):
         global threadexit
         while (not threadexit.isSet()):
-            # print('Turret thread running')
-            # TODO Step each iteration
-            # TODO anticipation
-            # TODO Active smoothing
 
             sleep(0.01)
             if self.active_smoothing:
