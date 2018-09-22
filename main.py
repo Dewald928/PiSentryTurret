@@ -206,6 +206,7 @@ def main(display):
                 cv2.line(displayframe, (cx,0), (cx,cam.h), (0,0,255), 1)
                 #send target coordinates
                 turret.send_target(turret.coord_to_pulse((cx,cy)),  currentXY)
+                # [ix,iy] = turret.possiblexy
                 #TODO crossair with anticipation
 
 # Auto mode 2 (Recurrent frames)---------------------------------------------------------
@@ -323,6 +324,7 @@ def main(display):
                 os.system("aplay -q modules/data/swvader03.wav &")
                 if display == 1:
                     cv2.setMouseCallback('display', on_click, 0)
+                turret.anticipation_active = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
                 print('[INFO] Automatic Mode Selected')
@@ -330,6 +332,7 @@ def main(display):
                 if display == 1:
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
+                turret.anticipation_active = True
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "2": # automatic mode
                 print('[INFO] Automatic Mode 2 Selected')
@@ -351,6 +354,12 @@ def main(display):
                 else:
                     print('[Warning] System Disarmed')
                     os.system("aplay -q modules/data/light-saber-off.wav &")
+            if KeyboardHandler.keypressed == "c":
+                turret.anticipation_active = not turret.anticipation_active
+                if turret.anticipation_active == True:
+                    print('[Info] Anticipation Active')
+                else:
+                    print('[Info] Anticipation Disabled')
 
 #  Arrow key control(manual mode) --------------------------------
             if tracker.mode == 0:

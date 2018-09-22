@@ -30,7 +30,7 @@ class Controller(threading.Thread):
         self.driver = ServoDriver(cfg)
 
         # Anticipation
-        self.anticipation_active = True
+        self.anticipation_active = False
         self.num_pts = 10 #number of previous pulse positions
         self.ant_sens = 10 # sensitivity of anticipation
         self.pre_possible_x = [0.0] * (self.num_pts + 1)
@@ -122,14 +122,13 @@ class Controller(threading.Thread):
     def center_position(self):
         print('[INFO] Centering...')
         self.armed = False
-        # self.anticipation_active = False #TODO fix this
         self.center[0] = (self.xMax+self.xMin)/2
         self.center[1] = (self.yMax+self.yMin)/2
         self.send_target(self.center, self.xy)
-        # self.anticipation_active = True
+        #TODO help not really
 
     def anticipation(self, newXYpulse):
-        # TODO check lengths
+        #TODO check lengths
 
         self.pre_possible_x[0] = newXYpulse[0] #new pulse placed in 0 position
         self.pre_possible_y[0] = newXYpulse[1]
@@ -194,6 +193,7 @@ class Controller(threading.Thread):
 
     def quit(self): # proper termination of thread
         global threadexit
+        self.anticipation_active = False
         self.center_position()
         sleep(2)
         threadexit.set()
