@@ -122,10 +122,11 @@ class Controller(threading.Thread):
     def center_position(self):
         print('[INFO] Centering...')
         self.armed = False
-        self.anticipation_active = False
+        # self.anticipation_active = False #TODO fix this
         self.center[0] = (self.xMax+self.xMin)/2
         self.center[1] = (self.yMax+self.yMin)/2
         self.send_target(self.center, self.xy)
+        # self.anticipation_active = True
 
     def anticipation(self, newXYpulse):
         # TODO check lengths
