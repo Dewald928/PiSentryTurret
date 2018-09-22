@@ -70,7 +70,7 @@ class FiringThread(threading.Thread):
         while True:
             if turret.firing:
                 print('BANG!')
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/blaster-firing.wav &")
+                os.system("aplay -q modules/data/blaster-firing.wav &")
                 turret.driver.move(turret.servoTrigger, turret.triggerHomePos)
                 sleep(0.2) #tweak for firing speed
                 turret.driver.move(turret.servoTrigger, turret.triggerFirePos)
@@ -87,7 +87,7 @@ def main(display):
     # =======================
     # ------ SETUP ----------
     # =======================
-    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader04.wav &") #use cmd: alsamixer for volume control
+    os.system("aplay -q modules/data/swvader04.wav &") #use cmd: alsamixer for volume control
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
@@ -311,6 +311,7 @@ def main(display):
                 turret.yRatio = cam.h/(turret.yMax-turret.yMin)
                 print('Maximum y limit set to', int(((turret.xy[1]/2)*180) + 90), 'degrees', turret.xy[1])
             if KeyboardHandler.key == "r": # reset calibration settings
+                os.system("aplay -q modules/data/WilhelmScream.wav &")
                 turret.reset_calibration()
             if KeyboardHandler.key == "x": # flip x
                 turret.flipx()
@@ -318,20 +319,20 @@ def main(display):
                 turret.flipy()
 # Mode selection----------------------------------------
             if KeyboardHandler.key == "0": # manual mode
-                print('Manual Mode Selected')
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader03.wav &")
+                print('[INFO] Manual Mode Selected')
+                os.system("aplay -q modules/data/swvader03.wav &")
                 if display == 1:
                     cv2.setMouseCallback('display', on_click, 0)
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "1": # automatic mode
-                print('Automatic Mode Selected')
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/swvader02.wav &")
+                print('[INFO] Automatic Mode Selected')
+                os.system("aplay -q -q modules/data/swvader02.wav &")
                 if display == 1:
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
                 tracker.mode = int(KeyboardHandler.key)
             if KeyboardHandler.key == "2": # automatic mode
-                print('Automatic Mode 2 Selected')
+                print('[INFO] Automatic Mode 2 Selected')
                 if display == 1:
                     cv2.setMouseCallback('display', lambda *args : None)
                 turret.armed = False
@@ -345,11 +346,11 @@ def main(display):
             if KeyboardHandler.key == "f": # f arms and disarms system
                 turret.armed = not turret.armed
                 if turret.armed == True:
-                    print('System Armed')
-                    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-on.wav &")
+                    print('[Warning] System Armed')
+                    os.system("aplay -q modules/data/light-saber-on.wav &")
                 else:
-                    print('System Disarmed')
-                    os.system("aplay /home/pi/software/PiSentryTurret/modules/data/light-saber-off.wav &")
+                    print('[Warning] System Disarmed')
+                    os.system("aplay -q modules/data/light-saber-off.wav &")
 
 #  Arrow key control(manual mode) --------------------------------
             if tracker.mode == 0:
@@ -400,7 +401,7 @@ def main(display):
 # Exit Program --------------------------------------------------
             if KeyboardHandler.key == chr(27): # quit program safely
                 print("Exiting...")
-                os.system("aplay /home/pi/software/PiSentryTurret/modules/data/force.wav &")
+                os.system("aplay -q modules/data/force.wav &")
                 turret.quit()
                 cam.stop()
                 cv2.destroyAllWindows()
@@ -420,11 +421,31 @@ def main(display):
 
 
 if __name__ == "__main__":
+    print("=====================================================")
+    print("-------------------PiSentryGun-----------------------")
+    print("---------------- By: Dewald Krynauw -----------------")
+    print("=====================================================")
+    print(" ")
+    print(" (╯°□°)╯︵ ┻━┻")
+    print(" ")
+    print("Keyboard Commands:")
+    print(" ")
+    print("0 = Manual Mode")
+    print("1 = Automatic Mode 1 (Fastest)")
+    print("2 = Automatic Mode 2")
+    print("w/a/s/d = up/left/down/right Movement")
+    print("8/4/5/6 = up/left/down/right Calibrate")
+    print("r = Reset Calibrations")
+    print("f = Arm/Disarm")
+    print("' ' = Manual Fire")
+    print("o/p = +/- Horizontal Anticipation")
+    print("k/l = +/- Vertical Anticipation")
+    print(" ")
     display = 0 #default no display
     try:
         display = int(sys.argv[1])
     except:
-        print('No display mode active. argv: 0 = no display, 1 = display')
+        print('argv: 0 = no display, 1 = display')
     main(display)
 
 

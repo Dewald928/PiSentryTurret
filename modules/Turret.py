@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
 import threading
-import os
-import numpy as np
 from time import sleep
 from modules.drivers.ServoDriverController import ServoDriver
 
@@ -122,7 +120,7 @@ class Controller(threading.Thread):
         print('Y flipped')
 
     def center_position(self):
-        print('Centering...')
+        print('[INFO] Centering...')
         self.armed = False
         self.anticipation_active = False
         self.center[0] = (self.xMax+self.xMin)/2
