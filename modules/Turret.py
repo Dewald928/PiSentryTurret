@@ -3,6 +3,7 @@
 import threading
 from time import sleep
 from modules.drivers.ServoDriverController import ServoDriver
+import numpy as np
 
 # ============================================================================
 # Turret thread that moves the servos to the correct locations corresponding
@@ -81,6 +82,7 @@ class Controller(threading.Thread):
 
     def fire(self): # pull trigger thread
         self.firing = True
+
 
     def reset_calibration(self):
         '''
@@ -171,8 +173,8 @@ class Controller(threading.Thread):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
         #TODO can't be larger than 1
-        self.possiblexy[0] = newXYpulse[0] + self.antXY[0]
-        self.possiblexy[1] = newXYpulse[1] + self.antXY[1]
+        self.possiblexy[0] = np.clip(newXYpulse[0] + self.antXY[0], -1, 1)
+        self.possiblexy[1] = np.clip(newXYpulse[1] + self.antXY[1], -1, 1)
         print('Anticipated pulse:', self.possiblexy)
 
 

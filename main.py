@@ -87,7 +87,7 @@ def main(display):
     # =======================
     # ------ SETUP ----------
     # =======================
-    os.system("aplay -q modules/data/swvader04.wav &") #use cmd: alsamixer for volume control
+    #use cmd: alsamixer for volume control
 
     # Create camera object
     cam = Camera.Cam(cfg) #TODO error if no camera found
@@ -131,7 +131,13 @@ def main(display):
     frame = cam.read()
     frame2 = cam.read()
     avg = None
+
+    if frame is None:
+        print("[ERROR] First frame couldn't be captured, check webcam")
+        exit()
+
     print('[INFO] Ready!')
+    os.system("aplay -q modules/data/swvader04.wav &")
     # ======================================
     # ------------- LOOP -------------------
     # ======================================
@@ -144,9 +150,9 @@ def main(display):
         frame = cam.read()
         # frame = imutils.resize(frame, width=cam.w)
         # break if frame couldn't be captures
-        if frame is None:
-            print("[ERROR] First frame couldn't be captured, check webcam")
-            break
+        # if frame is None:
+        #     print("[ERROR] First frame couldn't be captured, check webcam")
+        #     break
 
         if display == 1:
             displayframe = frame
