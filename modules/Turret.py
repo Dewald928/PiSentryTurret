@@ -172,9 +172,9 @@ class Controller(threading.Thread):
         for i in range(self.num_pts, 0, -1):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
-        #TODO can't be larger than 1
-        self.possiblexy[0] = np.clip(newXYpulse[0] + self.antXY[0], -1, 1)
-        self.possiblexy[1] = np.clip(newXYpulse[1] + self.antXY[1], -1, 1)
+        #TODO fix the anomaly here, still here?
+        self.possiblexy[0] = np.clip(newXYpulse[0] + self.antXY[0], -0.99, 0.99)
+        self.possiblexy[1] = np.clip(newXYpulse[1] + self.antXY[1], -0.99, 0.99)
         print('Anticipated pulse:', self.possiblexy)
 
 
