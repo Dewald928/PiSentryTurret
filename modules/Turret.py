@@ -40,7 +40,7 @@ class Controller(threading.Thread):
         self.distY = [0.0] * (self.num_pts - 1)
         self.propX = float(cfg['controller']['propX'])
         self.propY = float(cfg['controller']['propY'])
-        self.antXY = [0,0] #anticipation value
+        self.antXY = [0.0,0.0] #anticipation value
         self.accX = [0.0] * (self.num_pts - 1) # acceleration between previous points
         self.accY = [0.0] * (self.num_pts - 1)
 
@@ -159,7 +159,7 @@ class Controller(threading.Thread):
         # Addition of speed and acceleration
         # Terms are weighed to the sensitivity
 
-        self.antXY = [0,0]
+        self.antXY = [0.0,0.0]
 
         for i in range(self.num_pts - 2):
             self.antXY[0] = self.antXY[0] + self.distX[i] + self.accX[i]
@@ -172,9 +172,9 @@ class Controller(threading.Thread):
         for i in range(self.num_pts, 0, -1):
             self.pre_possible_x[i] = self.pre_possible_x[i - 1]
             self.pre_possible_y[i] = self.pre_possible_y[i - 1]
-        #TODO fix the anomaly here, still here?
-        self.possiblexy[0] = np.clip(newXYpulse[0] + self.antXY[0], -0.99, 0.99)
-        self.possiblexy[1] = np.clip(newXYpulse[1] + self.antXY[1], -0.99, 0.99)
+        #TODO final checking
+        self.possiblexy[0] = np.clip(newXYpulse[0] + self.antXY[0], -0.999, 0.999)
+        self.possiblexy[1] = np.clip(newXYpulse[1] + self.antXY[1], -0.999, 0.999)
         print('Anticipated pulse:', self.possiblexy)
 
 
@@ -184,7 +184,7 @@ class Controller(threading.Thread):
         if self.anticipation_active:
             self.anticipation(newXYpulse)
         else:
-            self.possiblexy = newXYpulse
+            self.possiblexy = list(newXYpulse) #tuples are imutable, therefore mustbe a list
 
         self.oldxy = curXYpulse # TODO what impact this has on anticipation?
 
