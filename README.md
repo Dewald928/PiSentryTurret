@@ -1,3 +1,2 @@
 # PiSentryTurret
-Please read the report. 
-It isn't perfect but it kinda works :D
+Please read the report for a full review on the project
